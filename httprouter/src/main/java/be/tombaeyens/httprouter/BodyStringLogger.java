@@ -13,21 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package be.tombaeyens.util;
+package be.tombaeyens.httprouter;
 
-import java.util.ArrayList;
+import org.slf4j.Logger;
 
-public class Collections {
+public interface BodyStringLogger {
 
-  @SuppressWarnings("unchecked")
-  @SafeVarargs
-  public static <T> ArrayList<T> arrayList(T... elements) {
-    ArrayList<T> list = new ArrayList<>();
-    if (elements!=null) {
-      for (T element: elements) {
-        list.add(element);
-      }
-    }
-    return list;
-  }
+  void logBodyString(String bodyString, Logger log);
 }

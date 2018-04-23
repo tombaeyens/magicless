@@ -58,15 +58,18 @@ public class Configuration {
   /** Retrieves the configured value for the option name.
    * If there are more values configured, this returns the first value.
    * @param name is the name without the - (dash) */
+  @SuppressWarnings("unchecked")
   public <T> T get(String name) {
     List<Object> values = optionValuesMap.get(name);
     return values!=null && !values.isEmpty() ? (T) values.get(0) : null;
   }
 
+  @SuppressWarnings("unchecked")
   public <T> List<T> getList(String name) {
     return (List<T>) optionValuesMap.get(name);
   }
 
+  @SuppressWarnings("unchecked")
   public <T> List<T> getArray(String name) {
     return (List<T>) optionValuesMap.get(name);
   }
@@ -114,9 +117,8 @@ public class Configuration {
       String errormessage =
         "Configuration errors:\n" +
         errors.stream().collect(joining("\n")) + "\n\n" +
-        "Configurations:\n" +
+        "Configurations provided:\n" +
         getOptionValueTextsForLogging() + "\n\n" +
-        "Configuration properties:\n" +
         options.getDocumentation();
       throw new ConfigurationException(errormessage);
     }

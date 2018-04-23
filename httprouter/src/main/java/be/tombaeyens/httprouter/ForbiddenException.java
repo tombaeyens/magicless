@@ -13,21 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package be.tombaeyens.util;
+package be.tombaeyens.httprouter;
 
-import java.util.ArrayList;
 
-public class Collections {
+public class ForbiddenException extends HttpException {
 
-  @SuppressWarnings("unchecked")
-  @SafeVarargs
-  public static <T> ArrayList<T> arrayList(T... elements) {
-    ArrayList<T> list = new ArrayList<>();
-    if (elements!=null) {
-      for (T element: elements) {
-        list.add(element);
-      }
-    }
-    return list;
+  private static final long serialVersionUID = 1L;
+
+  public ForbiddenException() {
+    super();
+  }
+
+  public ForbiddenException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
+  public ForbiddenException(String message) {
+    super(message);
+  }
+
+  public ForbiddenException(Throwable cause) {
+    super(cause);
+  }
+
+  @Override
+  public int getStatusCode() {
+    return 403;
   }
 }

@@ -143,10 +143,12 @@ public class Options {
       .max(Comparator.comparing(Integer::valueOf))
       .get();
     String rightAlign = "%-"+(maxLength+2)+"s";
-    return optionsByName.values().stream()
-      .distinct()
-      .map(option -> String.format(rightAlign, option.getNamesText()) + " " + option.getDocumentation())
-      .collect(joining("\n"));
+    return (usage!=null ? "Usage: "+usage+"\n" : "")+
+           "Configuration options:\n" +
+           optionsByName.values().stream()
+             .distinct()
+             .map(option -> String.format(rightAlign, option.getNamesText()) + " " + option.getDocumentation())
+             .collect(joining("\n"));
   }
 
   protected Map<String, Option> getOptionsByName() {
