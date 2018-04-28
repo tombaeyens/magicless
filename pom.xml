@@ -32,10 +32,13 @@
   </properties>
 
   <modules>
-    <module>util</module>
-    <module>configuration</module>
-    <module>httprouter</module>
-    <module>httpserver</module>
+    <module>app</module>
+    <module>db</module>
+    <module>router-servlet</module>
+    <module>jetty-server</module>
+    <module>http-client</module>
+    <module>gson-serializer</module>
+    <module>example</module>
   </modules>
 
   <dependencies>
