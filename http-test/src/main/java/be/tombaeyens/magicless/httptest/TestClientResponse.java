@@ -37,7 +37,7 @@ public class TestClientResponse extends ClientResponse {
         this.status +
         ", expected " +
         expectedStatus +
-        (latestServerException!=null ? ": The cause of this exception is the server side exception" : ""), latestServerException);
+        (latestServerException!=null ? ": Server says: "+latestServerException.toString() : ""), latestServerException);
     } else {
       return super.createStatusException(expectedStatus);
     }

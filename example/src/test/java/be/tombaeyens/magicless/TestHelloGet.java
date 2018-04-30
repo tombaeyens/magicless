@@ -17,10 +17,12 @@ package be.tombaeyens.magicless;
 
 import org.junit.Test;
 
-public class TestHelloGet {
-  
+public class TestHelloGet extends ExampleTest {
+
   @Test
   public void testHelloGet() {
-    
+    newGet("/hello")
+      .execute()
+      .assertStatusOk();
   }
 }

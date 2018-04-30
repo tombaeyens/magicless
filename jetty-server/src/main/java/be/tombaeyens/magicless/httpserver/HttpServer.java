@@ -20,6 +20,7 @@ import be.tombaeyens.magicless.app.container.Startable;
 import be.tombaeyens.magicless.app.container.Stoppable;
 import be.tombaeyens.magicless.app.util.Exceptions;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.FilterMapping;
 import org.eclipse.jetty.servlet.ServletHandler;
@@ -39,11 +40,10 @@ public class HttpServer implements Startable, Stoppable {
   static Logger log = LoggerFactory.getLogger(HttpServer.class);
 
   protected String name;
-  protected int port;
   protected Server server;
   protected ServletHandler servletHandler;
 
-  public HttpServer() {
+  public HttpServer(int port) {
     this.server = new Server(port);
     this.servletHandler = new ServletHandler();
     server.setHandler(servletHandler);
@@ -70,7 +70,7 @@ public class HttpServer implements Startable, Stoppable {
 
   public <T extends HttpServlet> T getServlet(Class<T> servletClass) {
     Optional<ServletHolder> servletHolder = Arrays.stream(servletHandler.getServlets())
-      .filter(servlet -> servletClass.isAssignableFrom(servlet.getClass()))
+      .filter(sh -> servletClass.isAssignableFrom(sh.getServletInstance().getClass()))
       .findFirst();
     try {
       return servletHolder.isPresent() ? (T) servletHolder.get().getServlet() : null;
@@ -96,7 +96,7 @@ public class HttpServer implements Startable, Stoppable {
   public HttpServer start() {
     try {
       server.start();
-      log.debug("Server started on port "+port);
+      log.debug((name!=null ? name : "Server") + " started on port "+getPort());
     } catch (Exception e) {
       if (isPortTakenException(e)) {
         // IDEA consider sending a shutdown command.  But only if you can do it safe so that it's impossible to shutdown production servers.
@@ -160,10 +160,6 @@ public class HttpServer implements Startable, Stoppable {
   }
 
   public int getPort() {
-    return port;
-  }
-
-  public void setPort(int port) {
-    this.port = port;
+    return ((ServerConnector)server.getConnectors()[0]).getPort();
   }
 }

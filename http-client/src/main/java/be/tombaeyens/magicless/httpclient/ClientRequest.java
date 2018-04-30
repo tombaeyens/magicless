@@ -16,8 +16,8 @@
 
 package be.tombaeyens.magicless.httpclient;
 
-import be.tombaeyens.util.Http;
-import be.tombaeyens.util.Os;
+import be.tombaeyens.magicless.app.util.Http;
+import be.tombaeyens.magicless.app.util.Os;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpGet;

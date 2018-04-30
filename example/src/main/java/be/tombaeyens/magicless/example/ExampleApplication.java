@@ -19,7 +19,6 @@ package be.tombaeyens.magicless.example;
 
 import be.tombaeyens.magicless.app.container.Container;
 import be.tombaeyens.magicless.app.util.Configuration;
-import be.tombaeyens.magicless.db.Db;
 import be.tombaeyens.magicless.db.DbConfiguration;
 import be.tombaeyens.magicless.httpserver.HttpServer;
 
@@ -32,11 +31,11 @@ public class ExampleApplication extends Container {
 
     ExampleApplication exampleApplication = new ExampleApplication(configuration);
     exampleApplication.start();
-    exampleApplication.getOpt(HttpServer.class).join();
+    exampleApplication.get(HttpServer.class).join();
   }
 
   public ExampleApplication(Configuration configuration) {
-    addFactory(Db.class, createExampleDbConfiguration(configuration));
+    // addFactory(Db.class, createExampleDbConfiguration(configuration));
     add(createExampleHttpServer(configuration));
 
     initialize();

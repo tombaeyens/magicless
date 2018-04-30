@@ -37,10 +37,6 @@ import org.junit.Before;
  * Usage see example/src/test/java/be/tombaeyens/magicless/ExampleTest.java */
 public abstract class HttpTest {
 
-  static {
-    System.setErr(System.out);
-  }
-
   protected static HttpClient httpClient = null;
   protected static Throwable latestServerException = null;
 

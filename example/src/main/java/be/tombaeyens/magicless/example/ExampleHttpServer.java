@@ -28,18 +28,17 @@ public class ExampleHttpServer extends HttpServer implements Initializable<Examp
   }
 
   public ExampleHttpServer(Configuration configuration, String prefix) {
+    super(configuration.getInteger(prefix+".port"));
     setName(configuration.getStringOpt(prefix+".name"));
-    setPort(configuration.getInteger(prefix+".port"));
   }
 
   @Override
   public void initialize(ExampleApplication application) {
     Db db = application.getOpt(Db.class);
 
-    RouterServlet servlet = new RouterServlet();
+    RouterServlet routerServlet = new RouterServlet()
+      .requestHandler(new HelloWorldGet(db));
 
-    servlet.requestHandler(new HelloWorldGet(db));
-
-    servlet(servlet, "/*");
+    servlet(routerServlet, "/*");
   }
 }

@@ -22,6 +22,10 @@ import be.tombaeyens.magicless.httptest.HttpTest;
 
 public class ExampleTest extends HttpTest {
 
+  static {
+    System.setErr(System.out);
+  }
+
   protected static ExampleApplication exampleApplication = null;
 
   private static class TestConfiguration extends Configuration {
@@ -32,7 +36,10 @@ public class ExampleTest extends HttpTest {
 
   @Override
   public HttpServer initialize() {
-    exampleApplication = new ExampleApplication(new TestConfiguration());
+    exampleApplication = new ExampleApplication(new TestConfiguration()
+      .put("http.server.port", "8080")
+      .put("http.server.name", "Example test server"));
+
     exampleApplication.start(); // also starts the HttpServer
     return exampleApplication.get(HttpServer.class);
   }
