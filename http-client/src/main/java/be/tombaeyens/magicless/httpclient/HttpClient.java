@@ -15,11 +15,15 @@
  */
 package be.tombaeyens.magicless.httpclient;
 
-import be.tombaeyens.util.Http;
+import be.tombaeyens.magicless.app.util.Http;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+
+import static be.tombaeyens.magicless.app.util.Exceptions.exceptionWithCause;
 
 /** Fluent, synchronous HTTP client based on Apache Http Components.
  *
@@ -52,39 +56,63 @@ public class HttpClient {
   protected static Logger log = LoggerFactory.getLogger(HttpClient.class);
 
   protected CloseableHttpClient apacheHttpClient = HttpClients.createDefault();
-
+  protected String baseUrl =  null;
   protected Serializer serializer;
 
-  public HttpClient() {
+  public ClientRequest newGet(String url) {
+    return newRequest(Http.Methods.GET, url);
   }
 
-  public HttpClient(Serializer serializer) {
-    this.serializer = serializer;
+  public ClientRequest newPost(String url) {
+    return newRequest(Http.Methods.POST, url);
+  }
+
+  public ClientRequest newPut(String url) {
+    return newRequest(Http.Methods.PUT, url);
+  }
+
+  public ClientRequest newDelete(String url) {
+    return newRequest(Http.Methods.DELETE, url);
+  }
+
+  /** @param method constant can be obtained from {@link Http.Methods} */
+  protected ClientRequest newRequest(String method, String url) {
+    return new ClientRequest(this, method, resolveUrl(url));
+  }
+
+  protected String resolveUrl(String url) {
+    return baseUrl!=null ? baseUrl+url : url;
+  }
+
+  public void close() {
+    try {
+      apacheHttpClient.close();
+    } catch (IOException e) {
+      throw exceptionWithCause("close Apache HTTP client", e);
+    }
+  }
+
+  public String getBaseUrl() {
+    return baseUrl;
+  }
+
+  public void setBaseUrl(String baseUrl) {
+    this.baseUrl = baseUrl;
   }
 
   public Serializer getSerializer() {
     return serializer;
   }
 
-  public ClientRequest newGet(String url) {
-    return new ClientRequest(this, Http.Methods.GET, url);
-  }
-  public ClientRequest newPut(String url) {
-    return new ClientRequest(this, Http.Methods.PUT, url);
-  }
-  public ClientRequest newPost(String url) {
-    return new ClientRequest(this, Http.Methods.POST, url);
-  }
-  public ClientRequest newDelete(String url) {
-    return new ClientRequest(this, Http.Methods.DELETE, url);
-  }
-
-  /** @param method constant can be obtained from {@link Http.Methods} */
-  public ClientRequest newRequest(String method, String url) {
-    return new ClientRequest(this, method, url);
+  public void setSerializer(Serializer serializer) {
+    this.serializer = serializer;
   }
 
   public CloseableHttpClient getApacheHttpClient() {
     return apacheHttpClient;
+  }
+
+  public void setApacheHttpClient(CloseableHttpClient apacheHttpClient) {
+    this.apacheHttpClient = apacheHttpClient;
   }
 }

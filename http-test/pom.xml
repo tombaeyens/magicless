@@ -27,11 +27,10 @@
     <version>1.0.0-SNAPSHOT</version>
   </parent>
 
-  <name>Example</name>
-  <artifactId>example-app</artifactId>
+  <name>HTTP Test</name>
+  <artifactId>http-test</artifactId>
 
   <dependencies>
-
     <dependency>
       <groupId>be.tombaeyens.magicless</groupId>
       <artifactId>app</artifactId>
@@ -39,7 +38,12 @@
     </dependency>
     <dependency>
       <groupId>be.tombaeyens.magicless</groupId>
-      <artifactId>db</artifactId>
+      <artifactId>http-client</artifactId>
+      <version>1.0.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>be.tombaeyens.magicless</groupId>
+      <artifactId>router-servlet</artifactId>
       <version>1.0.0-SNAPSHOT</version>
     </dependency>
     <dependency>
@@ -48,18 +52,10 @@
       <version>1.0.0-SNAPSHOT</version>
     </dependency>
     <dependency>
-      <groupId>be.tombaeyens.magicless</groupId>
-      <artifactId>router-servlet</artifactId>
-      <version>1.0.0-SNAPSHOT</version>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.12</version>
     </dependency>
-
-    <dependency>
-      <groupId>be.tombaeyens.magicless</groupId>
-      <artifactId>http-test</artifactId>
-      <version>1.0.0-SNAPSHOT</version>
-      <scope>test</scope>
-    </dependency>
-
   </dependencies>
 
 </project>

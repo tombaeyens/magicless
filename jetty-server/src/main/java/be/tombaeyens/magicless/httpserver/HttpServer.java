@@ -18,7 +18,7 @@ package be.tombaeyens.magicless.httpserver;
 import be.tombaeyens.magicless.app.container.Container;
 import be.tombaeyens.magicless.app.container.Startable;
 import be.tombaeyens.magicless.app.container.Stoppable;
-import be.tombaeyens.magicless.app.util.Configuration;
+import be.tombaeyens.magicless.app.util.Exceptions;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.FilterMapping;
@@ -28,8 +28,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.servlet.Filter;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import java.net.BindException;
+import java.util.Arrays;
+import java.util.Optional;
 
 public class HttpServer implements Startable, Stoppable {
 
@@ -40,18 +43,7 @@ public class HttpServer implements Startable, Stoppable {
   protected Server server;
   protected ServletHandler servletHandler;
 
-  public HttpServer(Configuration configuration) {
-    this(configuration, "http.server");
-  }
-
-  public HttpServer(Configuration configuration, String prefix) {
-    this(configuration.getStringOpt(prefix+".name"),
-         configuration.getInteger(prefix+".port"));
-  }
-
-  public HttpServer(String name, int port) {
-    this.name = name;
-    this.port = port;
+  public HttpServer() {
     this.server = new Server(port);
     this.servletHandler = new ServletHandler();
     server.setHandler(servletHandler);
@@ -74,6 +66,17 @@ public class HttpServer implements Startable, Stoppable {
     ServletHolder servletHolder = new ServletHolder(servlet);
     servletHandler.addServletWithMapping(servletHolder, path);
     return this;
+  }
+
+  public <T extends HttpServlet> T getServlet(Class<T> servletClass) {
+    Optional<ServletHolder> servletHolder = Arrays.stream(servletHandler.getServlets())
+      .filter(servlet -> servletClass.isAssignableFrom(servlet.getClass()))
+      .findFirst();
+    try {
+      return servletHolder.isPresent() ? (T) servletHolder.get().getServlet() : null;
+    } catch (ServletException e) {
+      throw Exceptions.exceptionWithCause("retrieve servlet from servletHolder", e);
+    }
   }
 
   public HttpServer filter(Filter filter) {
@@ -137,10 +140,9 @@ public class HttpServer implements Startable, Stoppable {
     stop();
   }
 
-  public int getPort() {
-    return port;
-  }
-
+  /** Blocks the thread until the HttpServer stops.
+   * This can be used when you're launching a server from the command line.
+   * Crtl+C will then stop the server and stop the server. */
   public void join() {
     try {
       server.join();
@@ -149,4 +151,19 @@ public class HttpServer implements Startable, Stoppable {
     }
   }
 
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public int getPort() {
+    return port;
+  }
+
+  public void setPort(int port) {
+    this.port = port;
+  }
 }

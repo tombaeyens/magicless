@@ -66,7 +66,9 @@ public class RouterServlet extends HttpServlet {
         log.debug("Problem by "+requestHandler.getClass().getSimpleName()+" for request "+request.getPathInfo(), e);
         response.statusInternalServerError();
         response.bodyString("{\"message\":\"See the server logs for more details\"}");
-        if (exceptionListener!=null) exceptionListener.exception(request, response, e);
+        if (exceptionListener!=null) {
+          exceptionListener.exception(request, response, e);
+        }
       }
     } else {
       log.debug("No handler found for "+request.getPathInfo());

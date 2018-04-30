@@ -24,7 +24,12 @@ import be.tombaeyens.magicless.httpserver.HttpServer;
 public class ExampleHttpServer extends HttpServer implements Initializable<ExampleApplication> {
 
   public ExampleHttpServer(Configuration configuration) {
-    super(configuration, "http.server");
+    this(configuration, "http.server");
+  }
+
+  public ExampleHttpServer(Configuration configuration, String prefix) {
+    setName(configuration.getStringOpt(prefix+".name"));
+    setPort(configuration.getInteger(prefix+".port"));
   }
 
   @Override

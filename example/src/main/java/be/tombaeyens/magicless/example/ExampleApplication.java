@@ -37,12 +37,16 @@ public class ExampleApplication extends Container {
 
   public ExampleApplication(Configuration configuration) {
     addFactory(Db.class, createExampleDbConfiguration(configuration));
-    add(new ExampleHttpServer(configuration));
+    add(createExampleHttpServer(configuration));
 
     initialize();
   }
 
   protected DbConfiguration createExampleDbConfiguration(Configuration configuration) {
     return new DbConfiguration(configuration, "example.db");
+  }
+
+  protected ExampleHttpServer createExampleHttpServer(Configuration configuration) {
+    return new ExampleHttpServer(configuration);
   }
 }

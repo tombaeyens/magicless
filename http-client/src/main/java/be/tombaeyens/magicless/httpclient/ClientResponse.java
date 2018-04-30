@@ -15,8 +15,8 @@
  */
 package be.tombaeyens.magicless.httpclient;
 
-import be.tombaeyens.util.Http;
-import be.tombaeyens.util.Io;
+import be.tombaeyens.magicless.app.util.Http;
+import be.tombaeyens.magicless.app.util.Io;
 import org.apache.http.Header;
 import org.apache.http.HeaderElement;
 import org.apache.http.HttpEntity;
@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static be.tombaeyens.util.Os.NEWLINE;
+import static be.tombaeyens.magicless.app.util.Os.NEWLINE;
 
 
 /** Obtain a response by starting from the {@link HttpClient} object
@@ -174,9 +174,13 @@ public class ClientResponse {
 
   public ClientResponse assertStatus(int expectedStatus) {
     if (status!=expectedStatus) {
-      throw new RuntimeException("Status was "+status+", expected "+expectedStatus);
+      throw createStatusException(expectedStatus);
     }
     return this;
+  }
+
+  protected AssertionError createStatusException(int expectedStatus) {
+    return new AssertionError("Status was "+status+", expected "+expectedStatus);
   }
 
   public String getBody() {

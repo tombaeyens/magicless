@@ -37,8 +37,9 @@
     <module>router-servlet</module>
     <module>jetty-server</module>
     <module>http-client</module>
-    <module>gson-serializer</module>
+    <module>http-test</module>
     <module>example</module>
+    <module>http-test</module>
   </modules>
 
   <dependencies>

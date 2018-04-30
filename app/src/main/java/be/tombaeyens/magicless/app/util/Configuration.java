@@ -68,4 +68,9 @@ public class Configuration {
       throw new RuntimeException("Invalid number value (integer) for configuration "+name+": "+textValue);
     }
   }
+
+  public Configuration put(String name, String value) {
+    properties.put(name, value);
+    return this;
+  }
 }
