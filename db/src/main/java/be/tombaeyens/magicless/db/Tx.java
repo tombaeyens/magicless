@@ -19,7 +19,10 @@ import be.tombaeyens.magicless.app.util.Io;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static be.tombaeyens.magicless.app.util.Exceptions.exceptionWithCause;
 import static be.tombaeyens.magicless.app.util.Log.logLines;
@@ -122,7 +125,11 @@ public class Tx {
     }
   }
 
-  public Update newUpdate(String sql) {
+  public CreateTable newCreateTable(Table table) {
+    return new CreateTable(this, table);
+  }
+
+  public Update newSqlUpdate(String sql) {
     try {
       DB_LOGGER.debug(sql);
       PreparedStatement preparedStatement = getConnection().prepareStatement(sql);
@@ -130,5 +137,26 @@ public class Tx {
     } catch (SQLException e) {
       throw exceptionWithCause("create new db update "+sql, e);
     }
+  }
+
+  public List<String> getTableNames() {
+    List<String> tableNames = new ArrayList<>();
+    try {
+      ResultSet tables = connection.getMetaData().getTables(null, null, "%", null);
+      while (tables.next()) {
+        String tableName = tables.getString(3);
+        tableNames.add(tableName);
+      }
+      return tableNames;
+    } catch (SQLException e) {
+      throw exceptionWithCause("get table names", e);
+    }
+  }
+
+  public Select newSelect(Selector... selectors) {
+    return new Select(this, selectors);
+  }
+
+  public Update newSqlUpdate(Table table) {
   }
 }

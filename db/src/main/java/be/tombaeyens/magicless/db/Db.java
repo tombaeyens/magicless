@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
 
 import static be.tombaeyens.magicless.app.util.Exceptions.assertNotNull;
 import static be.tombaeyens.magicless.app.util.Exceptions.exceptionWithCause;
@@ -31,9 +32,11 @@ public class Db {
   public static final Logger DB_LOGGER = LoggerFactory.getLogger(Db.class);
 
   protected DataSource dataSource;
+  protected Dialect dialect;
+  private List<String> tableNames;
 
   public Db(DbConfiguration dbConfiguration) {
-    assertNotNull(dbConfiguration.getDriver(), "Db driver is null");
+    // assertNotNull(dbConfiguration.getDriver(), "Db driver is null");
     assertNotNull(dbConfiguration.getUrl(), "Db url is null");
     try {
       ComboPooledDataSource dataSource = new ComboPooledDataSource();
@@ -48,6 +51,8 @@ public class Db {
       // dataSource.setMinPoolSize(5);
       // dataSource.setAcquireIncrement(5);
       // dataSource.setMaxPoolSize(20);
+
+      dialect = dbConfiguration.getDialect();
 
     } catch (Exception e) {
       throw exceptionWithCause("create data source " + dbConfiguration.getUrl(), e);
@@ -90,5 +95,9 @@ public class Db {
 
   public DataSource getDataSource() {
     return dataSource;
+  }
+
+  public Dialect getDialect() {
+    return dialect;
   }
 }

@@ -18,6 +18,10 @@ package be.tombaeyens.magicless.db;
 import be.tombaeyens.magicless.app.container.Container;
 import be.tombaeyens.magicless.app.container.Factory;
 import be.tombaeyens.magicless.app.util.Configuration;
+import be.tombaeyens.magicless.db.dialects.H2Dialect;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class DbConfiguration implements Factory {
 
@@ -25,6 +29,7 @@ public class DbConfiguration implements Factory {
   String url;
   String username;
   String password;
+  Dialect dialect;
 
   public DbConfiguration() {
   }
@@ -34,6 +39,23 @@ public class DbConfiguration implements Factory {
     url(configuration.getString(prefix+".url"));
     username(configuration.getString(prefix+".username"));
     password(configuration.getString(prefix+".password"));
+    dbDialect(getDialect(configuration, prefix));
+  }
+
+  protected Dialect getDialect(Configuration configuration, String prefix) {
+    String dialectText = configuration.getString(prefix+".dialect");
+    if (dialectText==null && url!=null) {
+      Matcher matcher = Pattern
+        .compile("jdbc:.*:.*")
+        .matcher(url);
+      if (matcher.matches()) {
+        dialectText = matcher.group(0);
+      }
+    }
+    if ("h2".equals(dialectText)) {
+      return H2Dialect.INSTANCE;
+    }
+    return null;
   }
 
   public DbConfiguration driver(String driver) {
@@ -56,6 +78,11 @@ public class DbConfiguration implements Factory {
     return this;
   }
 
+  public DbConfiguration dbDialect(Dialect dialect) {
+    this.dialect = dialect;
+    return this;
+  }
+
   public String getDriver() {
     return driver;
   }
@@ -72,6 +99,11 @@ public class DbConfiguration implements Factory {
     return password;
   }
 
+  public Dialect getDialect() {
+    return dialect;
+  }
+
+  /** implementing Factory */
   @Override
   public Db create(Container container) {
     return new Db(this);

@@ -17,6 +17,7 @@
 package be.tombaeyens.magicless.app.util;
 
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * Convenience methods for throwing runtime exceptions.
@@ -58,10 +59,17 @@ public class Exceptions {
     }
   }
 
-  public static void assertNotEmptyArray(String[] args, String name) {
-    assertNotNullParameter(args, name);
-    if (args.length==0) {
+  public static void assertNotEmptyArray(Object[] array, String name) {
+    assertNotNullParameter(array, name);
+    if (array.length==0) {
       throw new RuntimeException("Collection "+name+" is empty");
+    }
+  }
+
+  public static void assertNotEmptyMap(Map<?,?> map, String name) {
+    assertNotNullParameter(map, name);
+    if (map.size()==0) {
+      throw new RuntimeException("Map "+name+" is empty");
     }
   }
 }
