@@ -15,13 +15,29 @@
  */
 package be.tombaeyens.magicless.db;
 
-import be.tombaeyens.magicless.db.impl.SelectBuilder;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
+public class Aliasable {
 
-public class Function implements SelectField {
+  Map<Table,String> aliases;
 
-  @Override
-  public void appendTo(Select select, SelectBuilder selectBuilder) {
-
+  public String getQualifiedColumnName(Column column) {
+    String alias = aliases.get(column.getTable());
+    return alias!=null ? alias+"."+column.getName() : column.getName();
   }
+
+  protected Aliasable alias(Table table, String alias) {
+    if (aliases==null) {
+      aliases = new LinkedHashMap<>();
+    }
+    aliases.put(table, alias);
+    return this;
+  }
+
+  protected String getAlias(Table table) {
+    return aliases.get(table);
+  }
+
+
 }

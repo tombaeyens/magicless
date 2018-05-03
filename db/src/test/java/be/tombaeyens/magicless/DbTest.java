@@ -43,12 +43,6 @@ public class DbTest {
       .url("jdbc:h2:mem:test"));
 
     ensureCurrentSchema(db);
-
-    db.tx(tx->{
-
-//
-//      tx.newUpdate(
-    });
   }
 
   private void ensureCurrentSchema(Db db) {
@@ -78,7 +72,7 @@ public class DbTest {
 
   public boolean lockSchema(Db db, String nodeName) {
     return db.tx(tx->{
-      int updateCount = tx.newSqlUpdate(SchemaHistory.TABLE)
+      int updateCount = tx.newUpdate(SchemaHistory.TABLE)
         .set(DESCRIPTION, nodeName + " is upgrading the schema")
         .where(and(isNull(DESCRIPTION),
                    equal(TYPE, TYPE_LOCK)))
@@ -111,7 +105,7 @@ public class DbTest {
   }
 
   public int getDbSchemaVersion(Db db) {
-    db.tx(tx->{
+    return db.tx(tx->{
       SelectResults selectResults = tx
         .newSelect(SchemaHistory.VERSION_SCHEMA)
         .where(equal(TYPE, TYPE_VERSION))

@@ -15,95 +15,94 @@
  */
 package be.tombaeyens.magicless.db;
 
-import be.tombaeyens.magicless.db.impl.Parameter;
-import be.tombaeyens.magicless.db.impl.SelectBuilder;
+import be.tombaeyens.magicless.db.impl.SqlBuilder;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import static be.tombaeyens.magicless.app.util.Exceptions.*;
 
-public class Select {
+public class Select extends Aliasable {
 
   Tx tx;
-  List<Selector> selectors;
-  Map<Table,String> froms;
+  List<SelectField> fields;
+  List<SelectFrom> froms;
   Condition whereCondition;
 
-  public Select(Tx tx, Selector... selectors) {
+  public Select(Tx tx, SelectField... fields) {
     this.tx = tx;
-    this.selectors = Arrays.asList(selectors);
+    this.fields = Arrays.asList(fields);
   }
 
   public SelectResults execute() throws RuntimeException {
-    SelectBuilder selectBuilder = tx.getDb().getDialect().newSelectBuilder(this);
+    Dialect dialect = tx.getDb().getDialect();
+    SqlBuilder sql = dialect.newSqlBuilder();
 
-    assertNotEmptyCollection(selectors, "selectors is null. Please specify at least one non-null Selector in Tx.newSelect(...)");
-    selectBuilder.appendSelect();
-    selectors.forEach(selector->selector.appendTo(this, selectBuilder));
+    assertNotEmptyCollection(fields, "fields is empty. Specify at least one non-null Column or Function in Tx.newSelect(...)");
+    sql.append("SELECT ");
+    for (int i = 0; i<fields.size(); i++) {
+      if (i>0) {
+        sql.append(", ");
+      }
+      SelectField selectField = fields.get(i);
+      selectField.appendTo(this,sql);
+    }
+    sql.append(" \n");
 
-    assertNotEmptyMap(froms, "froms is null. Please specify at least one non-null tx.from(...)");
-    selectBuilder.appendFrom();
-    froms.keySet().forEach(table->{
-      String alias = froms.get(table);
-      selectBuilder.appendFrom(table, alias);
-    });
+    assertNotEmptyCollection(froms, "froms is empty. Specify at least one non-null select.from(...)");
+    sql.append("FROM ");
+    for (int i = 0; i<froms.size(); i++) {
+      if (i>0) {
+        sql.append(", \n     ");
+      }
+      SelectFrom from = froms.get(i);
+      Table table = from.getTable();
+      String alias = aliases.get(table);
+      String fromSql = alias!=null ? table.getName()+" AS "+alias : table.getName();
+      sql.append(fromSql);
+    }
+    sql.append("\n");
 
     if (whereCondition!=null) {
-      selectBuilder.appendWhere(this, whereCondition);
+      sql.append("WHERE ");
+      whereCondition.appendTo(this, sql);
     }
 
-    String sql = selectBuilder.getSql();
+    String sqlText = sql.getSql();
     PreparedStatement statement = null;
     try {
       statement = tx
         .getConnection()
-        .prepareStatement(sql);
+        .prepareStatement(sqlText);
     } catch (SQLException e) {
-      throw exceptionWithCause("prepare JDBC statement", e);
+      throw exceptionWithCause("prepare JDBC statement: \n"+sqlText, e);
     }
 
-    List<Parameter> parameters = selectBuilder.getParameters();
-    if (parameters!=null) {
-      for (int i=0; i<parameters.size(); i++) {
-        parameters.get(i).apply(statement, i);
-      }
-    }
+    sql.applyParameter(statement);
 
     try {
       ResultSet resultSet = statement.executeQuery();
-      return new SelectResults(this, resultSet, sql);
+      return new SelectResults(this, resultSet, sqlText);
     } catch (SQLException e) {
-      throw exceptionWithCause("execute query", e);
+      throw exceptionWithCause("execute query \n"+sqlText+"\n-->", e);
     }
   }
-
-  public String getAlias(Table table) {
-    return null;
-  }
-
-  public String getColumnName(Column column) {
-    String alias = froms.get(column.getTable());
-    return alias!=null ? alias+"."+column.getName() : column.getName();
-  }
-
   public Select from(Table table) {
     from(table, null);
     return this;
   }
 
   public Select from(Table table, String alias) {
+    assertNotNullParameter(table, "table");
     if (froms==null) {
-      // Preserving the order is important, that's why
-      // it's a *Linked*HashMap
-      froms = new LinkedHashMap<>();
+      froms = new ArrayList<>();
     }
-    froms.put(table, alias);
+    froms.add(new SelectFrom(table, alias));
+    alias(table, alias);
     return this;
   }
 
@@ -113,12 +112,16 @@ public class Select {
   }
 
   public Integer getSelectorIndex(Column column) {
-    for (int i=0; i<selectors.size(); i++) {
-      Selector selector = selectors.get(i);
-      if (selector==column) {
+    for (int i = 0; i<fields.size(); i++) {
+      SelectField selectField = fields.get(i);
+      if (selectField==column) {
         return i;
       }
     }
     return null;
+  }
+
+  public Tx getTx() {
+    return tx;
   }
 }

@@ -18,7 +18,7 @@ package be.tombaeyens.magicless.db;
 import be.tombaeyens.magicless.db.conditions.AndCondition;
 import be.tombaeyens.magicless.db.conditions.ColumnValueEqualCondition;
 import be.tombaeyens.magicless.db.conditions.IsNullCondition;
-import be.tombaeyens.magicless.db.impl.SelectBuilder;
+import be.tombaeyens.magicless.db.impl.SqlBuilder;
 
 public interface Condition {
 
@@ -34,5 +34,5 @@ public interface Condition {
     return new AndCondition(andConditions);
   }
 
-  void appendTo(Select select, SelectBuilder selectBuilder);
+  void appendTo(Aliasable aliasable, SqlBuilder sqlBuilder);
 }

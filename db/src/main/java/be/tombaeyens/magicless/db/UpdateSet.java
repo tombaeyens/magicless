@@ -15,10 +15,22 @@
  */
 package be.tombaeyens.magicless.db;
 
-import be.tombaeyens.magicless.db.impl.SelectBuilder;
+import be.tombaeyens.magicless.db.impl.SqlBuilder;
 
-/** Column, Function or * : values that can be retrieved in a select statement */
-public interface Selector {
+public class UpdateSet {
 
-  void appendTo(Select select, SelectBuilder selectBuilder);
+  Column column;
+  Object value;
+
+  public UpdateSet(Column column, Object value) {
+    this.column = column;
+    this.value = value;
+  }
+
+  public void appendTo(Update update, SqlBuilder sql) {
+    sql.append(update.getQualifiedColumnName(column));
+    sql.append(" = ?");
+    sql.addParameter(value, column.getType());
+  }
+
 }

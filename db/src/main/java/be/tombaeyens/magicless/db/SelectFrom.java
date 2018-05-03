@@ -15,13 +15,21 @@
  */
 package be.tombaeyens.magicless.db;
 
-import be.tombaeyens.magicless.db.impl.SelectBuilder;
+public class SelectFrom {
 
+  Table table;
+  String alias;
 
-public class Function implements SelectField {
+  public SelectFrom(Table table, String alias) {
+    this.table = table;
+    this.alias = alias;
+  }
 
-  @Override
-  public void appendTo(Select select, SelectBuilder selectBuilder) {
+  public Table getTable() {
+    return table;
+  }
 
+  public String getAlias() {
+    return alias;
   }
 }

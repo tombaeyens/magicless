@@ -18,7 +18,6 @@ package be.tombaeyens.magicless.db;
 import be.tombaeyens.magicless.app.util.Io;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -125,19 +124,15 @@ public class Tx {
     }
   }
 
-  public CreateTable newCreateTable(Table table) {
-    return new CreateTable(this, table);
-  }
-
-  public Update newSqlUpdate(String sql) {
-    try {
-      DB_LOGGER.debug(sql);
-      PreparedStatement preparedStatement = getConnection().prepareStatement(sql);
-      return new Update(preparedStatement);
-    } catch (SQLException e) {
-      throw exceptionWithCause("create new db update "+sql, e);
-    }
-  }
+//  public Update newSqlUpdate(String sql) {
+//    try {
+//      DB_LOGGER.debug(sql);
+//      PreparedStatement preparedStatement = getConnection().prepareStatement(sql);
+//      return new Update(preparedStatement);
+//    } catch (SQLException e) {
+//      throw exceptionWithCause("create new db update "+sql, e);
+//    }
+//  }
 
   public List<String> getTableNames() {
     List<String> tableNames = new ArrayList<>();
@@ -153,10 +148,19 @@ public class Tx {
     }
   }
 
-  public Select newSelect(Selector... selectors) {
-    return new Select(this, selectors);
+  public CreateTable newCreateTable(Table table) {
+    return new CreateTable(this, table);
   }
 
-  public Update newSqlUpdate(Table table) {
+  public Select newSelect(SelectField... selectFields) {
+    return new Select(this, selectFields);
+  }
+
+  public Update newUpdate(Table table) {
+    return newUpdate(table, null);
+  }
+
+  public Update newUpdate(Table table, String alias) {
+    return new Update(this, table, alias);
   }
 }

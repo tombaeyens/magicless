@@ -15,47 +15,14 @@
  */
 package be.tombaeyens.magicless.db;
 
+import be.tombaeyens.magicless.db.impl.CreateTableBuilder;
 import be.tombaeyens.magicless.db.impl.SelectBuilder;
-
-import java.util.List;
-import java.util.stream.Collectors;
+import be.tombaeyens.magicless.db.impl.SqlBuilder;
 
 public class Dialect {
 
-  public String getCreateTableSql(Table table) {
-    return String.format(getCreateTableTemplate(),
-      table.getName(),
-      getCreateTableColumnDefinitions(table));
-  }
-
-  protected String getCreateTableTemplate() {
-    return "CREATE TABLE %s (\n  %s);";
-  }
-
-  protected String getCreateTableColumnDefinitions(Table table) {
-    return table.getColumns().values().stream()
-      .map(column->getCreateTableColumnDefinition(column))
-      .collect(Collectors.joining(",\n  "));
-  }
-
-  protected String getCreateTableColumnDefinition(Column column) {
-    return column.getName()
-           + " " + getDataTypeSql(column.getType())
-           +getCreateTableColumnConstraits(column.getConstraints());
-  }
-
-  protected String getCreateTableColumnConstraits(List<Constraint> constraints) {
-    if (constraints==null) {
-      return "";
-    }
-    return constraints
-      .stream()
-      .map(constraint->getCreateTableColumnConstraint(constraint))
-      .collect(Collectors.joining(" "));
-  }
-
-  protected String getCreateTableColumnConstraint(Constraint constraint) {
-    return constraint.getDefaultSql();
+  public SqlBuilder newSqlBuilder() {
+    return new SqlBuilder(this);
   }
 
   public String getDataTypeSql(DataType dataType) {
@@ -64,5 +31,9 @@ public class Dialect {
 
   public SelectBuilder newSelectBuilder(Select select) {
     return new SelectBuilder(select);
+  }
+
+  public CreateTableBuilder newCreateTableBuilder(CreateTable createTable) {
+    return new CreateTableBuilder(createTable);
   }
 }

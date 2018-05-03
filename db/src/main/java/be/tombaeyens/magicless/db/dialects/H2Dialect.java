@@ -20,4 +20,6 @@ import be.tombaeyens.magicless.db.Dialect;
 public class H2Dialect extends Dialect {
 
   public static H2Dialect INSTANCE  = new H2Dialect();
+
+
 }

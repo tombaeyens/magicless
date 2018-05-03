@@ -16,7 +16,7 @@
 package be.tombaeyens.magicless.db;
 
 import be.tombaeyens.magicless.db.constraints.PrimaryKey;
-import be.tombaeyens.magicless.db.impl.SelectBuilder;
+import be.tombaeyens.magicless.db.impl.SqlBuilder;
 import be.tombaeyens.magicless.db.types.IntegerType;
 import be.tombaeyens.magicless.db.types.TimestampType;
 import be.tombaeyens.magicless.db.types.VarcharType;
@@ -24,7 +24,7 @@ import be.tombaeyens.magicless.db.types.VarcharType;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Column implements Selector {
+public class Column implements SelectField {
 
   protected Table table;
   protected String name;
@@ -83,9 +83,9 @@ public class Column implements Selector {
   }
 
   @Override
-  public void appendTo(Select select, SelectBuilder selectBuilder) {
-    String columnName = select.getColumnName(this);
-    selectBuilder.appendSelectorSql(columnName);
+  public void appendTo(Select select, SqlBuilder sql) {
+    String qualifiedColumnName = select.getQualifiedColumnName(this);
+    sql.append(qualifiedColumnName);
   }
 
   public Table getTable() {

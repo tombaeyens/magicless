@@ -15,13 +15,10 @@
  */
 package be.tombaeyens.magicless.db;
 
-import be.tombaeyens.magicless.db.impl.SelectBuilder;
+import be.tombaeyens.magicless.db.impl.SqlBuilder;
 
+/** Column, Function or * : values that can be retrieved in a select statement */
+public interface SelectField {
 
-public class Function implements SelectField {
-
-  @Override
-  public void appendTo(Select select, SelectBuilder selectBuilder) {
-
-  }
+  void appendTo(Select select, SqlBuilder sql);
 }

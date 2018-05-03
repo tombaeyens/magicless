@@ -16,29 +16,87 @@
 
 package be.tombaeyens.magicless.db;
 
+import be.tombaeyens.magicless.db.impl.SqlBuilder;
+
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
-import static be.tombaeyens.magicless.app.util.Exceptions.exceptionWithCause;
-import static be.tombaeyens.magicless.db.Db.DB_LOGGER;
+import static be.tombaeyens.magicless.app.util.Exceptions.*;
 
-public class Update {
+public class Update extends Aliasable {
 
-  PreparedStatement preparedStatement;
+  Tx tx;
+  Table table;
+  List<UpdateSet> sets;
+  Condition whereCondition;
 
-  public Update(PreparedStatement preparedStatement) {
-    this.preparedStatement = preparedStatement;
+  public Update(Tx tx, Table table, String alias) {
+    this.tx = tx;
+    assertNotNullParameter(table, "table");
+    this.table = table;
+    alias(table, alias);
   }
 
-  // TODO add methods for setting parameters
-
   public int execute() {
-    try {
-      int result = preparedStatement.executeUpdate();
-      DB_LOGGER.debug("Update result: "+result);
-      return result;
-    } catch (SQLException e) {
-      throw exceptionWithCause("execute db update", e);
+    Dialect dialect = tx.getDb().getDialect();
+    SqlBuilder sql = dialect.newSqlBuilder();
+
+    sql.append("UPDATE ");
+    sql.append(table.getName());
+    String alias = getAlias(table);
+    if (alias!=null) {
+      sql.append("AS ");
+      sql.append(alias);
     }
+
+    sql.append("SET ");
+    assertNotEmptyCollection(sets, "sets is empty. Specify at least one non-null update.set(...)");
+    for (int i = 0; i<sets.size(); i++) {
+      if (i>0) {
+        sql.append(", \n    ");
+      }
+      UpdateSet updateSet = sets.get(i);
+      updateSet.appendTo(this,sql);
+    }
+    sql.append(" \n");
+
+    if (whereCondition!=null) {
+      sql.append("WHERE ");
+      whereCondition.appendTo(this, sql);
+    }
+
+    String sqlText = sql.getSql();
+    PreparedStatement statement = null;
+    try {
+      statement = tx
+        .getConnection()
+        .prepareStatement(sqlText);
+    } catch (SQLException e) {
+      throw exceptionWithCause("prepare JDBC statement: \n"+sqlText, e);
+    }
+
+    sql.applyParameter(statement);
+
+    try {
+      int updateCount = statement.executeUpdate();
+      return updateCount;
+    } catch (SQLException e) {
+      throw exceptionWithCause("execute update \n"+sqlText+"\n-->", e);
+    }
+  }
+
+  public Update set(Column column, Object value) {
+    if (sets==null) {
+      sets = new ArrayList<>();
+    }
+    sets.add(new UpdateSet(column, value));
+    return this;
+  }
+
+  public Update where(Condition whereCondition) {
+    this.whereCondition = whereCondition;
+    return this;
   }
 }
