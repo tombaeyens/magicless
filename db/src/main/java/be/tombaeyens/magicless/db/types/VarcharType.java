@@ -18,6 +18,7 @@ package be.tombaeyens.magicless.db.types;
 import be.tombaeyens.magicless.db.DataType;
 
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import static be.tombaeyens.magicless.app.util.Exceptions.exceptionWithCause;
@@ -54,7 +55,16 @@ public class VarcharType implements DataType {
       }
 
     } catch (SQLException e) {
-      throw exceptionWithCause("set JDBC int parameter value "+value, e);
+      throw exceptionWithCause("set JDBC varchar parameter value "+value, e);
+    }
+  }
+
+  @Override
+  public String getResultSetValue(int index, ResultSet resultSet) {
+    try {
+      return resultSet.getString(index);
+    } catch (SQLException e) {
+      throw exceptionWithCause("get JDBC string result set value "+index, e);
     }
   }
 }

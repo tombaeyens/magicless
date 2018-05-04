@@ -34,12 +34,12 @@
   <modules>
     <module>app</module>
     <module>db</module>
+    <module>gson-polymorphic</module>
     <module>router-servlet</module>
     <module>jetty-server</module>
     <module>http-client</module>
     <module>http-test</module>
     <module>example</module>
-    <module>http-test</module>
   </modules>
 
   <dependencies>

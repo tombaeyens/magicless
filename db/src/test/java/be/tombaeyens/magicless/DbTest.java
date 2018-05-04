@@ -17,19 +17,11 @@ package be.tombaeyens.magicless;
 
 import be.tombaeyens.magicless.db.Db;
 import be.tombaeyens.magicless.db.DbConfiguration;
-import be.tombaeyens.magicless.db.SelectResults;
-import be.tombaeyens.magicless.tables.SchemaHistory;
+import be.tombaeyens.magicless.db.Tx;
+import be.tombaeyens.magicless.db.schema.SchemaManager;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.stream.Collectors;
-
-import static be.tombaeyens.magicless.app.util.Exceptions.assertTrue;
-import static be.tombaeyens.magicless.db.Condition.and;
-import static be.tombaeyens.magicless.db.Condition.equal;
-import static be.tombaeyens.magicless.db.Condition.isNull;
-import static be.tombaeyens.magicless.tables.SchemaHistory.*;
 
 public class DbTest {
 
@@ -42,77 +34,18 @@ public class DbTest {
     Db db = new Db(new DbConfiguration()
       .url("jdbc:h2:mem:test"));
 
-    ensureCurrentSchema(db);
-  }
+    SchemaManager schemaManager = new SchemaManager(db, APPLICATION_VERSION, "testnode1") {
+      @Override
+      protected void createApplicationTables(Tx tx) {
 
-  private void ensureCurrentSchema(Db db) {
-    if (!schemaHistoryExists(db)) {
-      createSchema(db);
-    } else {
-      int dbSchemaVersion = -1;
-      while (dbSchemaVersion!=APPLICATION_VERSION) {
-        dbSchemaVersion = getDbSchemaVersion(db);
-        if (dbSchemaVersion<APPLICATION_VERSION) {
-          if (lockSchema(db, "appserver1")) {
-            upgradeSchema(db, dbSchemaVersion);
-            releaseSchema(db);
-          } else {
-            try {
-              Thread.sleep(5000);
-            } catch (InterruptedException e) {
-              log.debug("Waiting for other node to finish upgrade got interrupted");
-            }
-          }
-        } else if (dbSchemaVersion<APPLICATION_VERSION) {
-          throw new RuntimeException("Please upgrade the application.");
-        }
       }
-    }
+    };
+
+    schemaManager.ensureCurrentSchema();
   }
 
-  public boolean lockSchema(Db db, String nodeName) {
-    return db.tx(tx->{
-      int updateCount = tx.newUpdate(SchemaHistory.TABLE)
-        .set(DESCRIPTION, nodeName + " is upgrading the schema")
-        .where(and(isNull(DESCRIPTION),
-                   equal(TYPE, TYPE_LOCK)))
-        .execute();
-      tx.setResult(updateCount==1);
-    });
-  }
+  // TODO move ensureCurrentSchema(Db db) in some SchemaManager
+  // Add drop db to schema manager (which delegates to the dialect)
 
-  public void upgradeSchema(Db db, int currentDdbSchemaVersion) {
 
-  }
-
-  public void releaseSchema(Db db) {
-  }
-
-  public boolean schemaHistoryExists(Db db) {
-    return db.tx(tx->{
-      boolean schemaHistoryExists = tx.getTableNames().stream()
-        .map(tableName->tableName.toLowerCase())
-        .collect(Collectors.toList())
-        .contains(SchemaHistory.TABLE.getName());
-      tx.setResult(schemaHistoryExists);
-    });
-  }
-
-  public void createSchema(Db db) {
-    db.tx(tx->{
-      tx.newCreateTable(SchemaHistory.TABLE).execute();
-    });
-  }
-
-  public int getDbSchemaVersion(Db db) {
-    return db.tx(tx->{
-      SelectResults selectResults = tx
-        .newSelect(SchemaHistory.VERSION_SCHEMA)
-        .where(equal(TYPE, TYPE_VERSION))
-        .execute();
-      boolean hasResult = selectResults.next();
-      assertTrue(hasResult, "No DB schema version record found");
-      tx.setResult(selectResults.get(SchemaHistory.VERSION_SCHEMA));
-    });
-  }
 }

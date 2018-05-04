@@ -36,8 +36,8 @@ public class Db {
   private List<String> tableNames;
 
   public Db(DbConfiguration dbConfiguration) {
-    // assertNotNull(dbConfiguration.getDriver(), "Db driver is null");
     assertNotNull(dbConfiguration.getUrl(), "Db url is null");
+    assertNotNull(dbConfiguration.getDialect(), "Db dialect is null");
     try {
       ComboPooledDataSource dataSource = new ComboPooledDataSource();
       this.dataSource = dataSource;

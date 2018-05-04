@@ -15,8 +15,6 @@
  */
 package be.tombaeyens.magicless.db;
 
-import be.tombaeyens.magicless.db.impl.CreateTableBuilder;
-import be.tombaeyens.magicless.db.impl.SelectBuilder;
 import be.tombaeyens.magicless.db.impl.SqlBuilder;
 
 public class Dialect {
@@ -27,13 +25,5 @@ public class Dialect {
 
   public String getDataTypeSql(DataType dataType) {
     return dataType.getDefaultSql();
-  }
-
-  public SelectBuilder newSelectBuilder(Select select) {
-    return new SelectBuilder(select);
-  }
-
-  public CreateTableBuilder newCreateTableBuilder(CreateTable createTable) {
-    return new CreateTableBuilder(createTable);
   }
 }

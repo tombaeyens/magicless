@@ -15,13 +15,13 @@
  */
 package be.tombaeyens.magicless.db;
 
-import be.tombaeyens.magicless.db.impl.SelectBuilder;
+import be.tombaeyens.magicless.db.impl.SqlBuilder;
 
 
 public class Function implements SelectField {
 
   @Override
-  public void appendTo(Select select, SelectBuilder selectBuilder) {
+  public void appendTo(Select select, SqlBuilder sql) {
 
   }
 }

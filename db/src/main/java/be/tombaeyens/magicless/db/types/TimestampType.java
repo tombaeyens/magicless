@@ -18,8 +18,10 @@ package be.tombaeyens.magicless.db.types;
 import be.tombaeyens.magicless.db.DataType;
 
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 import static be.tombaeyens.magicless.app.util.Exceptions.exceptionWithCause;
@@ -48,7 +50,17 @@ public class TimestampType implements DataType {
       }
 
     } catch (SQLException e) {
-      throw exceptionWithCause("set JDBC int parameter value "+value, e);
+      throw exceptionWithCause("set JDBC timestamp parameter value "+value, e);
+    }
+  }
+
+  @Override
+  public LocalDateTime getResultSetValue(int index, ResultSet resultSet) {
+    try {
+      Timestamp timestamp = resultSet.getTimestamp(index);
+      return timestamp!=null ? timestamp.toLocalDateTime() : null;
+    } catch (SQLException e) {
+      throw exceptionWithCause("get JDBC timestamp result set value "+index, e);
     }
   }
 

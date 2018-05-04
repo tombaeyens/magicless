@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package be.tombaeyens.magicless.tables;
+package be.tombaeyens.magicless.db.schema;
 
 import be.tombaeyens.magicless.db.Column;
 import be.tombaeyens.magicless.db.Table;
 
 public class SchemaHistory extends Table {
-
-  public static final SchemaHistory TABLE = new SchemaHistory();
 
   public static final Column ID = new Column().name("id").typeVarchar(1024).primaryKey();
   public static final Column TYPE = new Column().name("type").typeVarchar(1024);
@@ -33,6 +31,8 @@ public class SchemaHistory extends Table {
   public static final String TYPE_VERSION = "version";
   public static final String TYPE_LOCK = "lock";
   public static final String TYPE_UPDATE = "update";
+
+  public static final SchemaHistory TABLE = new SchemaHistory();
 
   private SchemaHistory() {
     name("schemaHistory");

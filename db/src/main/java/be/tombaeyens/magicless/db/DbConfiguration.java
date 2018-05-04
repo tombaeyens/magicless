@@ -20,9 +20,6 @@ import be.tombaeyens.magicless.app.container.Factory;
 import be.tombaeyens.magicless.app.util.Configuration;
 import be.tombaeyens.magicless.db.dialects.H2Dialect;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 public class DbConfiguration implements Factory {
 
   String driver;
@@ -39,23 +36,6 @@ public class DbConfiguration implements Factory {
     url(configuration.getString(prefix+".url"));
     username(configuration.getString(prefix+".username"));
     password(configuration.getString(prefix+".password"));
-    dbDialect(getDialect(configuration, prefix));
-  }
-
-  protected Dialect getDialect(Configuration configuration, String prefix) {
-    String dialectText = configuration.getString(prefix+".dialect");
-    if (dialectText==null && url!=null) {
-      Matcher matcher = Pattern
-        .compile("jdbc:.*:.*")
-        .matcher(url);
-      if (matcher.matches()) {
-        dialectText = matcher.group(0);
-      }
-    }
-    if ("h2".equals(dialectText)) {
-      return H2Dialect.INSTANCE;
-    }
-    return null;
   }
 
   public DbConfiguration driver(String driver) {
@@ -65,7 +45,24 @@ public class DbConfiguration implements Factory {
 
   public DbConfiguration url(String url) {
     this.url = url;
+    if (dialect==null) {
+      String dialectText = getDialectTextFromUrl(url);
+      if ("h2".equals(dialectText)) {
+        this.dialect = H2Dialect.INSTANCE;
+      }
+    }
     return this;
+  }
+
+  private String getDialectTextFromUrl(String url) {
+    // Calculate the dialect from the url
+    if (url.startsWith("jdbc:") && url.length()>6) {
+      int endIndex = url.indexOf(":", 5);
+      if (endIndex!=-1) {
+        return url.substring(5, endIndex);
+      }
+    }
+    return null;
   }
 
   public DbConfiguration username(String username) {
