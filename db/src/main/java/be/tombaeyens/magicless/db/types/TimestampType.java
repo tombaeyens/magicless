@@ -43,7 +43,9 @@ public class TimestampType implements DataType {
           timestamp = (Timestamp) value;
         } else if (value instanceof Date) {
           timestamp = new Timestamp(((Date)value).getTime());
-        } else { // TODO if (value instanceof LocalDateTime) {
+        } else if (value instanceof LocalDateTime) {
+          timestamp = Timestamp.valueOf((LocalDateTime)value);
+        } else {
           throw new RuntimeException("Unsupported data type: "+value);
         }
         statement.setTimestamp(i, timestamp);
@@ -52,6 +54,16 @@ public class TimestampType implements DataType {
     } catch (SQLException e) {
       throw exceptionWithCause("set JDBC timestamp parameter value "+value, e);
     }
+  }
+
+  @Override
+  public String toText(Object value) {
+    return value!=null ? value.toString() : "null";
+  }
+
+  @Override
+  public boolean isRightAlinged() {
+    return false;
   }
 
   @Override

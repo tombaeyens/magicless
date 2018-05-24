@@ -13,31 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package be.tombaeyens.magicless.db;
+package be.tombaeyens.magicless.db.schema;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import be.tombaeyens.magicless.db.Tx;
 
-public class Aliasable {
+public interface SchemaUpdate {
 
-  Map<Table,String> aliases;
-
-  public String getQualifiedColumnName(Column column) {
-    String alias = aliases.get(column.getTable());
-    return alias!=null ? alias+"."+column.getName() : column.getName();
-  }
-
-  protected Aliasable alias(Table table, String alias) {
-    if (aliases==null) {
-      aliases = new LinkedHashMap<>();
-    }
-    aliases.put(table, alias);
-    return this;
-  }
-
-  protected String getAlias(Table table) {
-    return aliases.get(table);
-  }
-
-
+  void update(Tx tx);
 }

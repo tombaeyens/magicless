@@ -13,14 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package be.tombaeyens.magicless.db;
+package be.tombaeyens.magicless.app.util;
 
-import be.tombaeyens.magicless.db.impl.SqlBuilder;
+import java.time.LocalDateTime;
 
-/** Column, Function or * : values that can be retrieved in a select statement */
-public interface SelectField {
+public class Time {
 
-  String getName();
-  void appendTo(Select select, SqlBuilder sql);
-  DataType getType();
+  static LocalDateTime now = null;
+
+  public static LocalDateTime now() {
+    return now!=null ? now : LocalDateTime.now();
+  }
+
+  /** to be used by tests */
+  public static void setNow(LocalDateTime now) {
+    Time.now = now;
+  }
 }

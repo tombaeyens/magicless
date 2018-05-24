@@ -15,6 +15,7 @@
  */
 package be.tombaeyens.magicless.db;
 
+import be.tombaeyens.magicless.db.schema.SchemaManager;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +23,6 @@ import org.slf4j.LoggerFactory;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.List;
 
 import static be.tombaeyens.magicless.app.util.Exceptions.assertNotNull;
 import static be.tombaeyens.magicless.app.util.Exceptions.exceptionWithCause;
@@ -33,7 +33,8 @@ public class Db {
 
   protected DataSource dataSource;
   protected Dialect dialect;
-  private List<String> tableNames;
+  protected SchemaManager schemaManager;
+  protected String schemaManagerNodeName;
 
   public Db(DbConfiguration dbConfiguration) {
     assertNotNull(dbConfiguration.getUrl(), "Db url is null");
@@ -52,7 +53,9 @@ public class Db {
       // dataSource.setAcquireIncrement(5);
       // dataSource.setMaxPoolSize(20);
 
-      dialect = dbConfiguration.getDialect();
+      this.dialect = dbConfiguration.getDialect();
+      String schemaManagerNodeName = dbConfiguration.getSchemaManagerNodeName();
+      this.schemaManager = new SchemaManager(this, schemaManagerNodeName);
 
     } catch (Exception e) {
       throw exceptionWithCause("create data source " + dbConfiguration.getUrl(), e);
@@ -99,5 +102,9 @@ public class Db {
 
   public Dialect getDialect() {
     return dialect;
+  }
+
+  public SchemaManager getSchemaManager() {
+    return schemaManager;
   }
 }

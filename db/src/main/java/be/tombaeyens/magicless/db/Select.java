@@ -23,22 +23,22 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static be.tombaeyens.magicless.app.util.Exceptions.*;
 
-public class Select extends Aliasable {
+public class Select extends AliasableStatement {
 
-  Tx tx;
   List<SelectField> fields;
   List<SelectFrom> froms;
   Condition whereCondition;
 
   public Select(Tx tx, SelectField... fields) {
-    this.tx = tx;
+    super(tx);
     this.fields = Arrays.asList(fields);
   }
 
-  public SelectResults execute() throws RuntimeException {
+  public SelectResults execute() {
     Dialect dialect = tx.getDb().getDialect();
     SqlBuilder sql = dialect.newSqlBuilder();
 
@@ -52,6 +52,19 @@ public class Select extends Aliasable {
       selectField.appendTo(this,sql);
     }
     sql.append(" \n");
+
+    // If columns were specified in the select from one table,
+    // and of no .from(...) is specified, then the next section
+    // calculates the from based on the first column.
+    if (froms==null && fields.size()>0) {
+      Optional<Table> tableOptional = fields.stream()
+        .filter(field -> field instanceof Column)
+        .map(field -> ((Column) field).getTable())
+        .findFirst();
+      if (tableOptional.isPresent()) {
+        from(tableOptional.get());
+      }
+    }
 
     assertNotEmptyCollection(froms, "froms is empty. Specify at least one non-null select.from(...)");
     sql.append("FROM ");
@@ -72,19 +85,15 @@ public class Select extends Aliasable {
       whereCondition.appendTo(this, sql);
     }
 
+    sql.append(";");
+
     String sqlText = sql.getSql();
-    PreparedStatement statement = null;
-    try {
-      statement = tx
-        .getConnection()
-        .prepareStatement(sqlText);
-    } catch (SQLException e) {
-      throw exceptionWithCause("prepare JDBC statement: \n"+sqlText, e);
-    }
+    PreparedStatement statement = createPreparedStatement(sqlText);
 
     sql.applyParameter(statement);
 
     try {
+      tx.logSQL(sql.getLogText());
       ResultSet resultSet = statement.executeQuery();
       return new SelectResults(this, resultSet, sqlText);
     } catch (SQLException e) {
@@ -111,11 +120,12 @@ public class Select extends Aliasable {
     return this;
   }
 
-  public Integer getSelectorIndex(Column column) {
+  /** Returns JDBC (meaning starts at 1) index of the column. */
+  public Integer getSelectorJdbcIndex(Column column) {
     for (int i = 0; i<fields.size(); i++) {
       SelectField selectField = fields.get(i);
       if (selectField==column) {
-        return i;
+        return i+1;
       }
     }
     return null;
@@ -123,5 +133,9 @@ public class Select extends Aliasable {
 
   public Tx getTx() {
     return tx;
+  }
+
+  public List<SelectField> getFields() {
+    return fields;
   }
 }

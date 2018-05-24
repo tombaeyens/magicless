@@ -15,7 +15,7 @@
  */
 package be.tombaeyens.magicless.db.conditions;
 
-import be.tombaeyens.magicless.db.Aliasable;
+import be.tombaeyens.magicless.db.AliasableStatement;
 import be.tombaeyens.magicless.db.Condition;
 import be.tombaeyens.magicless.db.impl.SqlBuilder;
 
@@ -29,12 +29,12 @@ public class AndCondition implements Condition {
   }
 
   @Override
-  public void appendTo(Aliasable aliasable, SqlBuilder sql) {
+  public void appendTo(AliasableStatement aliasableStatement, SqlBuilder sql) {
     for (int i=0; i<andConditions.length; i++) {
       if (i>0) {
         sql.append(" \n   AND ");
       }
-      andConditions[i].appendTo(aliasable, sql);
+      andConditions[i].appendTo(aliasableStatement, sql);
     }
   }
 }

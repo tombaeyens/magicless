@@ -60,6 +60,16 @@ public class VarcharType implements DataType {
   }
 
   @Override
+  public String toText(Object value) {
+    return value!=null ? "'"+value.toString()+"'" : "null";
+  }
+
+  @Override
+  public boolean isRightAlinged() {
+    return false;
+  }
+
+  @Override
   public String getResultSetValue(int index, ResultSet resultSet) {
     try {
       return resultSet.getString(index);

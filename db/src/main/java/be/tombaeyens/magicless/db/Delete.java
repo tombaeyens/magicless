@@ -18,19 +18,14 @@ package be.tombaeyens.magicless.db;
 
 import be.tombaeyens.magicless.db.impl.SqlBuilder;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static be.tombaeyens.magicless.app.util.Exceptions.assertNotEmptyCollection;
 import static be.tombaeyens.magicless.app.util.Exceptions.assertNotNullParameter;
 
-public class Update extends AliasableStatement {
+public class Delete extends AliasableStatement {
 
   Table table;
-  List<UpdateSet> sets;
   Condition whereCondition;
 
-  public Update(Tx tx, Table table, String alias) {
+  public Delete(Tx tx, Table table, String alias) {
     super(tx);
     assertNotNullParameter(table, "table");
     this.table = table;
@@ -41,24 +36,13 @@ public class Update extends AliasableStatement {
     Dialect dialect = tx.getDb().getDialect();
     SqlBuilder sql = dialect.newSqlBuilder();
 
-    sql.append("UPDATE ");
+    sql.append("DELETE FROM ");
     sql.append(table.getName());
     String alias = getAlias(table);
     if (alias!=null) {
       sql.append("AS ");
       sql.append(alias);
     }
-
-    sql.append("\nSET ");
-    assertNotEmptyCollection(sets, "sets is empty. Specify at least one non-null update.set(...)");
-    for (int i = 0; i<sets.size(); i++) {
-      if (i>0) {
-        sql.append(", \n    ");
-      }
-      UpdateSet updateSet = sets.get(i);
-      updateSet.appendTo(this,sql);
-    }
-    sql.append(" \n");
 
     if (whereCondition!=null) {
       sql.append("WHERE ");
@@ -70,15 +54,7 @@ public class Update extends AliasableStatement {
     return executeUpdate(sql);
   }
 
-  public Update set(Column column, Object value) {
-    if (sets==null) {
-      sets = new ArrayList<>();
-    }
-    sets.add(new UpdateSet(column, value));
-    return this;
-  }
-
-  public Update where(Condition whereCondition) {
+  public Delete where(Condition whereCondition) {
     this.whereCondition = whereCondition;
     return this;
   }

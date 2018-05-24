@@ -17,35 +17,41 @@ package be.tombaeyens.magicless;
 
 import be.tombaeyens.magicless.db.Db;
 import be.tombaeyens.magicless.db.DbConfiguration;
-import be.tombaeyens.magicless.db.Tx;
-import be.tombaeyens.magicless.db.schema.SchemaManager;
+import be.tombaeyens.magicless.tables.User;
+import be.tombaeyens.magicless.tables.Users;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.UUID;
 
 public class DbTest {
 
   static Logger log = LoggerFactory.getLogger(DbTest.class);
 
-  private static final int APPLICATION_VERSION = 1;
-
   @Test
-  public void testDb() {
+  public void testDb() throws Exception {
     Db db = new Db(new DbConfiguration()
       .url("jdbc:h2:mem:test"));
 
-    SchemaManager schemaManager = new SchemaManager(db, APPLICATION_VERSION, "testnode1") {
-      @Override
-      protected void createApplicationTables(Tx tx) {
+    db.getSchemaManager().ensureCurrentSchema(
+      tx->{
+        tx.newCreateTable(Users.TABLE).execute();
+      });
 
-      }
-    };
+    db.tx(tx-> {
+      Users.insertUser(tx, new User()
+        .id(UUID.randomUUID().toString())
+        .firstName("Tom")
+        .email("tom@shape.ai")
+      );
+    });
 
-    schemaManager.ensureCurrentSchema();
+    db.tx(tx-> {
+      log.debug("Deleting all "+Users.findAllUsers(tx).count()+" users");
+      tx.newDelete(Users.TABLE).execute();
+    });
   }
 
-  // TODO move ensureCurrentSchema(Db db) in some SchemaManager
   // Add drop db to schema manager (which delegates to the dialect)
-
-
 }

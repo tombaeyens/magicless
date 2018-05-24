@@ -17,8 +17,6 @@ package be.tombaeyens.magicless.db.impl;
 
 import be.tombaeyens.magicless.db.DataType;
 
-import java.sql.PreparedStatement;
-
 public class Parameter {
 
   Object value;
@@ -29,7 +27,11 @@ public class Parameter {
     this.type = type;
   }
 
-  public void apply(PreparedStatement statement, int i) {
-    type.setParameter(statement, i, value);
+  public Object getValue() {
+    return value;
+  }
+
+  public DataType getType() {
+    return type;
   }
 }

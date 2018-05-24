@@ -24,5 +24,9 @@ public interface DataType {
 
   void setParameter(PreparedStatement statement, int i, Object value);
 
+  String toText(Object value);
+
   <T> T getResultSetValue(int index, ResultSet resultSet);
+
+  boolean isRightAlinged();
 }

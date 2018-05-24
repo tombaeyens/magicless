@@ -23,13 +23,10 @@ public class SchemaHistory extends Table {
   public static final Column ID = new Column().name("id").typeVarchar(1024).primaryKey();
   public static final Column TYPE = new Column().name("type").typeVarchar(1024);
   public static final Column DESCRIPTION = new Column().name("description").typeVarchar(1024);
-  public static final Column VERSION_SCHEMA = new Column().name("versionSchema").typeInteger();
-  public static final Column UPDATE_INDEX = new Column().name("updateIndex").typeInteger();
-  public static final Column UPDATE_START = new Column().name("updateStart").typeTimestamp();
-  public static final Column UPDATE_END = new Column().name("updateEnd").typeTimestamp();
+  public static final Column VERSION = new Column().name("version").typeInteger();
+  public static final Column TIME = new Column().name("time").typeTimestamp();
 
   public static final String TYPE_VERSION = "version";
-  public static final String TYPE_LOCK = "lock";
   public static final String TYPE_UPDATE = "update";
 
   public static final SchemaHistory TABLE = new SchemaHistory();
@@ -39,9 +36,7 @@ public class SchemaHistory extends Table {
     column(ID);
     column(TYPE);
     column(DESCRIPTION);
-    column(VERSION_SCHEMA);
-    column(UPDATE_INDEX);
-    column(UPDATE_START);
-    column(UPDATE_END);
+    column(VERSION);
+    column(TIME);
   }
 }

@@ -34,5 +34,5 @@ public interface Condition {
     return new AndCondition(andConditions);
   }
 
-  void appendTo(Aliasable aliasable, SqlBuilder sqlBuilder);
+  void appendTo(AliasableStatement aliasableStatement, SqlBuilder sqlBuilder);
 }

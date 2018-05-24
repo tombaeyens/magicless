@@ -15,6 +15,7 @@
  */
 package be.tombaeyens.magicless.example;
 
+import be.tombaeyens.magicless.routerservlet.ResourceRequestHandler;
 import be.tombaeyens.magicless.routerservlet.RouterServlet;
 import be.tombaeyens.magicless.app.container.Initializable;
 import be.tombaeyens.magicless.app.util.Configuration;
@@ -37,7 +38,8 @@ public class ExampleHttpServer extends HttpServer implements Initializable<Examp
     Db db = application.getOpt(Db.class);
 
     RouterServlet routerServlet = new RouterServlet()
-      .requestHandler(new HelloWorldGet(db));
+      .requestHandler(new HelloWorldGet(db))
+      .requestHandler(new ResourceRequestHandler("http"));
 
     servlet(routerServlet, "/*");
   }

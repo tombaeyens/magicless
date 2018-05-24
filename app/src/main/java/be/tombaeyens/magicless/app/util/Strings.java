@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package be.tombaeyens.magicless.db;
+package be.tombaeyens.magicless.app.util;
 
-import be.tombaeyens.magicless.db.impl.SqlBuilder;
+import java.util.Arrays;
 
-/** Column, Function or * : values that can be retrieved in a select statement */
-public interface SelectField {
+public class Strings {
 
-  String getName();
-  void appendTo(Select select, SqlBuilder sql);
-  DataType getType();
+  public static String generate(char c, int multiplier) {
+    char[] chars = new char[multiplier];
+    Arrays.fill(chars, 0, multiplier, c);
+    return new String(chars);
+  }
 }

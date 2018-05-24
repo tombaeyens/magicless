@@ -15,7 +15,7 @@
  */
 package be.tombaeyens.magicless.db.conditions;
 
-import be.tombaeyens.magicless.db.Aliasable;
+import be.tombaeyens.magicless.db.AliasableStatement;
 import be.tombaeyens.magicless.db.Column;
 import be.tombaeyens.magicless.db.Condition;
 import be.tombaeyens.magicless.db.impl.SqlBuilder;
@@ -32,8 +32,8 @@ public class ColumnValueEqualCondition implements Condition {
   }
 
   @Override
-  public void appendTo(Aliasable aliasable, SqlBuilder sql) {
-    sql.append(aliasable.getQualifiedColumnName(column));
+  public void appendTo(AliasableStatement aliasableStatement, SqlBuilder sql) {
+    sql.append(aliasableStatement.getQualifiedColumnName(column));
     sql.append(" = ?");
     sql.addParameter(value, column.getType());
   }

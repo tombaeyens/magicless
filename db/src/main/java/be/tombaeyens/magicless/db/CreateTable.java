@@ -69,6 +69,7 @@ public class CreateTable {
 
     String sqlText = sql.getSql();
     try {
+      tx.logSQL(sqlText);
       tx.getConnection()
         .prepareStatement(sqlText)
         .execute();

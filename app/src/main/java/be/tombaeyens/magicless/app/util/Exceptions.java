@@ -72,4 +72,10 @@ public class Exceptions {
       throw new RuntimeException("Map "+name+" is empty");
     }
   }
+
+  public static void assertSame(Object o1, Object o2, String message, String... messageArgs) {
+    if (o1!=o2) {
+      throw new RuntimeException(String.format(message, (Object[]) messageArgs));
+    }
+  }
 }

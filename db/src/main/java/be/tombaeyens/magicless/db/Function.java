@@ -21,7 +21,17 @@ import be.tombaeyens.magicless.db.impl.SqlBuilder;
 public class Function implements SelectField {
 
   @Override
+  public String getName() {
+    return null;
+  }
+
+  @Override
   public void appendTo(Select select, SqlBuilder sql) {
 
+  }
+
+  @Override
+  public DataType getType() {
+    return null;
   }
 }

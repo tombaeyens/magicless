@@ -21,6 +21,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import static be.tombaeyens.magicless.app.util.Exceptions.exceptionWithCause;
@@ -42,7 +43,7 @@ public class Tx {
   public Tx(Db db, Connection connection) {
     this.db = db;
     this.connection = connection;
-    DB_LOGGER.debug("Starting " + this);
+    DB_LOGGER.debug(this+" starting");
     currentTx.set(this);
   }
 
@@ -90,17 +91,17 @@ public class Tx {
     currentTx.set(null);
     if (isRollbackOnly) {
       try {
-        DB_LOGGER.warn("Rolling back " + this + (rollbackReason!=null ? " because: " + rollbackReason : ""));
+        DB_LOGGER.warn(this+" rolling back" + (rollbackReason!=null ? " because: " + rollbackReason : ""));
         connection.rollback();
       } catch (SQLException e) {
-        DB_LOGGER.error("Tx rollback failed: " + e.getMessage(), e);
+        DB_LOGGER.error(this+" rollback failed: " + e.getMessage(), e);
       }
     } else {
       try {
-        DB_LOGGER.debug("Committing " + this);
+        DB_LOGGER.debug(this+" committing");
         connection.commit();
       } catch (SQLException e) {
-        DB_LOGGER.error("Tx commit failed: " + e.getMessage(), e);
+        DB_LOGGER.error(this+" commit failed: " + e.getMessage(), e);
       }
     }
   }
@@ -124,22 +125,13 @@ public class Tx {
     }
   }
 
-//  public Update newSqlUpdate(String sql) {
-//    try {
-//      DB_LOGGER.debug(sql);
-//      PreparedStatement preparedStatement = getConnection().prepareStatement(sql);
-//      return new Update(preparedStatement);
-//    } catch (SQLException e) {
-//      throw exceptionWithCause("create new db update "+sql, e);
-//    }
-//  }
-
   public List<String> getTableNames() {
     List<String> tableNames = new ArrayList<>();
     try {
-      ResultSet tables = connection.getMetaData().getTables(null, null, "%", null);
+      ResultSet tables = connection.getMetaData().getTables(null, null, "%", new String[]{"TABLE"});
       while (tables.next()) {
         String tableName = tables.getString(3);
+        logSQL(" <- "+tableName);
         tableNames.add(tableName);
       }
       return tableNames;
@@ -162,5 +154,23 @@ public class Tx {
 
   public Update newUpdate(Table table, String alias) {
     return new Update(this, table, alias);
+  }
+
+  public Insert newInsert(Table table) {
+    return new Insert(this, table);
+  }
+
+  public Select newSelectStarFrom(Table table) {
+    Collection<Column> columnsCollection = table.getColumns().values();
+    SelectField[] columnsArray = columnsCollection.toArray(new SelectField[table.getColumns().size()]);
+    return new Select(this, columnsArray).from(table);
+  }
+
+  public Delete newDelete(Table table) {
+    return newDelete(table, null);
+  }
+
+  public Delete newDelete(Table table, String alias) {
+    return new Delete(this, table, alias);
   }
 }

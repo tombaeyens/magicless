@@ -34,10 +34,21 @@ public class IntegerType implements DataType {
   @Override
   public void setParameter(PreparedStatement statement, int i, Object value) {
     try {
-      statement.setLong(i, ((Number)value).longValue());
+      long longValue = ((Number) value).longValue();
+      statement.setLong(i, longValue);
     } catch (SQLException e) {
-      throw exceptionWithCause("set JDBC int parameter value "+value, e);
+      throw exceptionWithCause("set JDBC long parameter value "+value, e);
     }
+  }
+
+  @Override
+  public String toText(Object value) {
+    return value!=null ? value.toString() : "null";
+  }
+
+  @Override
+  public boolean isRightAlinged() {
+    return true;
   }
 
   @Override

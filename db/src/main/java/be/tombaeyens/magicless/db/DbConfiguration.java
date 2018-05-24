@@ -27,6 +27,7 @@ public class DbConfiguration implements Factory {
   String username;
   String password;
   Dialect dialect;
+  String schemaManagerNodeName;
 
   public DbConfiguration() {
   }
@@ -51,6 +52,11 @@ public class DbConfiguration implements Factory {
         this.dialect = H2Dialect.INSTANCE;
       }
     }
+    return this;
+  }
+
+  public DbConfiguration schemaManagerNodeName(String schemaManagerNodeName) {
+    this.schemaManagerNodeName = schemaManagerNodeName;
     return this;
   }
 
@@ -98,6 +104,10 @@ public class DbConfiguration implements Factory {
 
   public Dialect getDialect() {
     return dialect;
+  }
+
+  public String getSchemaManagerNodeName() {
+    return schemaManagerNodeName;
   }
 
   /** implementing Factory */

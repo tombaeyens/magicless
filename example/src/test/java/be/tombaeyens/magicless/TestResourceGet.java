@@ -13,14 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package be.tombaeyens.magicless.db;
+package be.tombaeyens.magicless;
 
-import be.tombaeyens.magicless.db.impl.SqlBuilder;
+import org.hamcrest.CoreMatchers;
+import org.junit.Assert;
+import org.junit.Test;
 
-/** Column, Function or * : values that can be retrieved in a select statement */
-public interface SelectField {
+public class TestResourceGet extends ExampleTest {
 
-  String getName();
-  void appendTo(Select select, SqlBuilder sql);
-  DataType getType();
+  @Test
+  public void testHelloGet() {
+    String body = newGet("/index.html")
+      .execute()
+      .assertStatusOk()
+      .getBody();
+
+    Assert.assertThat(body, CoreMatchers.containsString("Hi!"));
+  }
 }

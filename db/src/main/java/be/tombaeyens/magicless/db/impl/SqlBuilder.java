@@ -28,6 +28,7 @@ public class SqlBuilder {
   Dialect dialect;
   StringBuilder sql = new StringBuilder();
   List<Parameter> parameters;
+  String logText = null;
 
   public SqlBuilder(Dialect dialect) {
     this.dialect = dialect;
@@ -45,7 +46,8 @@ public class SqlBuilder {
   }
 
   public String getSql() {
-    return this.sql.toString();
+    this.logText = this.sql.toString();
+    return logText;
   }
 
   public void appendDataType(DataType type) {
@@ -63,8 +65,16 @@ public class SqlBuilder {
   public void applyParameter(PreparedStatement statement) {
     if (parameters!=null) {
       for (int i=0; i<parameters.size(); i++) {
-        parameters.get(i).apply(statement, i);
+        Parameter parameter = parameters.get(i);
+        DataType type = parameter.getType();
+        Object value = parameter.getValue();
+        type.setParameter(statement, i + 1, value);
+        logText = logText.replaceFirst("\\?", type.toText(value));
       }
     }
+  }
+
+  public String getLogText() {
+    return logText;
   }
 }
