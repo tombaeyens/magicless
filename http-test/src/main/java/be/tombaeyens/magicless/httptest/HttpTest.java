@@ -18,6 +18,7 @@ package be.tombaeyens.magicless.httptest;
 import be.tombaeyens.magicless.httpclient.ClientRequest;
 import be.tombaeyens.magicless.httpclient.ClientResponse;
 import be.tombaeyens.magicless.httpclient.HttpClient;
+import be.tombaeyens.magicless.httpclient.Serializer;
 import be.tombaeyens.magicless.httpserver.HttpServer;
 import be.tombaeyens.magicless.routerservlet.RouterServlet;
 import org.junit.Before;
@@ -43,30 +44,46 @@ public abstract class HttpTest {
   @Before
   public void setUp() {
     if (httpClient==null) {
-      HttpServer httpServer = initialize();
-
-      httpServer
-        .getServlet(RouterServlet.class)
-        .setExceptionListener(new ServerExceptionListener());
-
-      int serverPort = httpServer.getPort();
-      httpClient = new TestHttpClient();
-      httpClient.setBaseUrl("http://localhost:" + serverPort);
+      setUpStatic();
     }
-
     // This ensures that no exceptions will pass through from the previous
     // test to this test because latestServerException is static
     latestServerException = null;
   }
 
+  /** performs 'static' initializations and is called only once before
+   * the first test starts.  It's called from inside the setUp.
+   * Caution, when using statics ensure that no interference between
+   * tests occurs through the statics.  They should be stateless so
+   * that no interference can occur between tests. */
+  protected void setUpStatic() {
+    HttpServer httpServer = createHttpServer();
+    httpServer
+      .getServlet(RouterServlet.class)
+      .setExceptionListener(new ServerExceptionListener());
+
+    httpClient = createHttpClient(httpServer);
+  }
+
+  protected TestHttpClient createHttpClient(HttpServer httpServer) {
+    TestHttpClient httpClient = new TestHttpClient();
+    httpClient.setBaseUrl("http://localhost:" + httpServer.getPort());
+    httpClient.setSerializer(createSerializer());
+    return httpClient;
+  }
+
+  protected Serializer createSerializer() {
+    return null;
+  }
+
   /** Called once before the first test is executed and can be used
    * to initialize static fields.  Ensure that those static fields
    * do not carry state from one test to another. */
-  public abstract HttpServer initialize();
+  public abstract HttpServer createHttpServer();
 
   /** Starts building a new GET request.
    * The path is relative to the root like eg newGet("/hello").
-   * The request is performed against the server that was created in the {@link #initialize()}.
+   * The request is performed against the server that was created in the {@link #createHttpServer()}.
    * The base url is "http://localhost:" + serverPort */
   public ClientRequest newGet(String url) {
     return httpClient.newGet(url);
@@ -74,7 +91,7 @@ public abstract class HttpTest {
 
   /** Starts building a new POST request.
    * The path is relative to the root like eg newGet("/hello").
-   * The request is performed against the server that was created in the {@link #initialize()}.
+   * The request is performed against the server that was created in the {@link #createHttpServer()}.
    * The base url is "http://localhost:" + serverPort */
   public ClientRequest newPost(String url) {
     return httpClient.newPost(url);
@@ -82,7 +99,7 @@ public abstract class HttpTest {
 
   /** Starts building a new PUT request.
    * The path is relative to the root like eg newGet("/hello").
-   * The request is performed against the server that was created in the {@link #initialize()}.
+   * The request is performed against the server that was created in the {@link #createHttpServer()}.
    * The base url is "http://localhost:" + serverPort */
   public ClientRequest newPut(String url) {
     return httpClient.newPut(url);
@@ -90,7 +107,7 @@ public abstract class HttpTest {
 
   /** Starts building a new DELETE request.
    * The path is relative to the root like eg newGet("/hello").
-   * The request is performed against the server that was created in the {@link #initialize()}.
+   * The request is performed against the server that was created in the {@link #createHttpServer()}.
    * The base url is "http://localhost:" + serverPort */
   public ClientRequest newDelete(String url) {
     return httpClient.newDelete(url);

@@ -21,12 +21,20 @@ import be.tombaeyens.magicless.db.Table;
 public class SchemaHistory extends Table {
 
   public static final Column ID = new Column().name("id").typeVarchar(1024).primaryKey();
+  public static final Column TIME = new Column().name("time").typeTimestamp();
+  public static final Column PROCESS_REF = new Column().name("processRef").typeVarchar(255);
   public static final Column TYPE = new Column().name("type").typeVarchar(1024);
   public static final Column DESCRIPTION = new Column().name("description").typeVarchar(1024);
   public static final Column VERSION = new Column().name("version").typeInteger();
-  public static final Column TIME = new Column().name("time").typeTimestamp();
 
+  /** single record to ensure that only one process updates the schema at a time */
+  public static final String TYPE_LOCK = "lock";
+
+  /** single record to ensure that only one process updates the schema at a time */
   public static final String TYPE_VERSION = "version";
+  public static final String TYPE_HEARTBEAT = "heartBeat";
+  public static final String TYPE_STARTUP = "startup";
+  public static final String TYPE_SHUTDOWN = "shutdown";
   public static final String TYPE_UPDATE = "update";
 
   public static final SchemaHistory TABLE = new SchemaHistory();
@@ -34,9 +42,10 @@ public class SchemaHistory extends Table {
   private SchemaHistory() {
     name("schemaHistory");
     column(ID);
+    column(TIME);
+    column(PROCESS_REF);
     column(TYPE);
     column(DESCRIPTION);
     column(VERSION);
-    column(TIME);
   }
 }

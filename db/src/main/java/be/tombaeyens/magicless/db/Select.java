@@ -78,9 +78,9 @@ public class Select extends AliasableStatement {
       String fromSql = alias!=null ? table.getName()+" AS "+alias : table.getName();
       sql.append(fromSql);
     }
-    sql.append("\n");
 
     if (whereCondition!=null) {
+      sql.append("\n");
       sql.append("WHERE ");
       whereCondition.appendTo(this, sql);
     }

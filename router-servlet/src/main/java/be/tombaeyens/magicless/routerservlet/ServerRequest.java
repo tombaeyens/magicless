@@ -21,6 +21,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -46,6 +47,7 @@ public class ServerRequest {
   protected boolean bodyIsReadAsString;
   protected RequestHandler requestHandler;
   protected BodyStringLogger bodyStringLogger = DEFAULT_BODY_STRING_LOGGER;
+  protected Map<String,Object> requestObjects = null;
 
   public ServerRequest(HttpServletRequest request) {
     this.request = request;
@@ -166,5 +168,16 @@ public class ServerRequest {
 
   public HttpServletRequest getRequest() {
     return request;
+  }
+
+  public void setContextObject(String key, Object value) {
+    if (requestObjects==null) {
+      requestObjects = new HashMap<>();
+    }
+    this.requestObjects.put(key, value);
+  }
+
+  public <T> T getContextObject(String key) {
+    return requestObjects!=null ? (T) requestObjects.get(key) : null;
   }
 }

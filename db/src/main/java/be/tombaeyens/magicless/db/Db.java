@@ -15,12 +15,14 @@
  */
 package be.tombaeyens.magicless.db;
 
-import be.tombaeyens.magicless.db.schema.SchemaManager;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
+import java.lang.management.ManagementFactory;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -33,12 +35,12 @@ public class Db {
 
   protected DataSource dataSource;
   protected Dialect dialect;
-  protected SchemaManager schemaManager;
-  protected String schemaManagerNodeName;
+  protected String processRef;
 
   public Db(DbConfiguration dbConfiguration) {
     assertNotNull(dbConfiguration.getUrl(), "Db url is null");
     assertNotNull(dbConfiguration.getDialect(), "Db dialect is null");
+
     try {
       ComboPooledDataSource dataSource = new ComboPooledDataSource();
       this.dataSource = dataSource;
@@ -54,12 +56,27 @@ public class Db {
       // dataSource.setMaxPoolSize(20);
 
       this.dialect = dbConfiguration.getDialect();
-      String schemaManagerNodeName = dbConfiguration.getSchemaManagerNodeName();
-      this.schemaManager = new SchemaManager(this, schemaManagerNodeName);
+      this.processRef = initializeProcessRef(dbConfiguration);
+
 
     } catch (Exception e) {
       throw exceptionWithCause("create data source " + dbConfiguration.getUrl(), e);
     }
+  }
+
+  protected String initializeProcessRef(DbConfiguration dbConfiguration) {
+    String processRef = dbConfiguration.getProcessRef();
+    if (processRef==null) {
+      processRef = ManagementFactory.getRuntimeMXBean().getName();
+      if (processRef==null) {
+        try {
+          processRef = InetAddress.getLocalHost().getHostAddress();
+        } catch (UnknownHostException e) {
+          processRef = "unnamed node";
+        }
+      }
+    }
+    return processRef;
   }
 
   @SuppressWarnings("unchecked")
@@ -104,7 +121,7 @@ public class Db {
     return dialect;
   }
 
-  public SchemaManager getSchemaManager() {
-    return schemaManager;
+  public String getProcessRef() {
+    return processRef;
   }
 }

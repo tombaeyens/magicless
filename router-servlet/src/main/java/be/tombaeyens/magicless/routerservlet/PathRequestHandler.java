@@ -15,7 +15,8 @@
  */
 package be.tombaeyens.magicless.routerservlet;
 
-import be.tombaeyens.util.Http;
+
+import be.tombaeyens.magicless.app.util.Http;
 
 public abstract class PathRequestHandler implements RequestHandler {
 

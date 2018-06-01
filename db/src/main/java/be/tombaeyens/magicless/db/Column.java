@@ -15,6 +15,7 @@
  */
 package be.tombaeyens.magicless.db;
 
+import be.tombaeyens.magicless.db.constraints.NotNull;
 import be.tombaeyens.magicless.db.constraints.PrimaryKey;
 import be.tombaeyens.magicless.db.impl.SqlBuilder;
 import be.tombaeyens.magicless.db.types.IntegerType;
@@ -79,6 +80,11 @@ public class Column implements SelectField {
 
   public Column primaryKey() {
     constraint(new PrimaryKey());
+    return this;
+  }
+
+  public Column notNull() {
+    constraint(new NotNull());
     return this;
   }
 

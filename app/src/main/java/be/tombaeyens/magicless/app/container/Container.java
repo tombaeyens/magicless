@@ -15,7 +15,10 @@
  */
 package be.tombaeyens.magicless.app.container;
 
+import be.tombaeyens.magicless.app.util.Exceptions;
+
 import java.lang.reflect.Array;
+import java.lang.reflect.Field;
 import java.util.*;
 
 import static be.tombaeyens.magicless.app.util.Exceptions.assertNotNullParameter;
@@ -173,15 +176,45 @@ public class Container {
 
   protected void initialize() {
     assertTrue(state==State.CREATING, "To initialize, the container should be in state CREATING, but was "+state);
-    for (Initializable initializable: getAll(Initializable.class)) {
-      initializable.initialize(this);
+    for (Object component: components) {
+      initialize(component);
     }
     state = State.INITIALIZED;
   }
 
   private void initialize(Object component) {
     if (component instanceof Initializable) {
-      ((Initializable)component).initialize(this);
+      Initializable initializable = (Initializable) component;
+      initializable.initialize(this);
+    }
+    inject(component, component.getClass());
+  }
+
+  private void inject(Object component, Class<?> clazz) {
+    for (Field field: clazz.getDeclaredFields()) {
+      Object dependency = null;
+      Inject inject = field.getAnnotation(Inject.class);
+      if (inject!=null) {
+        String dependencyName = inject.value();
+        boolean required = inject.required();
+        if (!"".equals(dependencyName)) {
+          dependency = required ? get(dependencyName) : getOpt(dependencyName);
+        } else {
+          dependency = required ? get(field.getType()) : getOpt(field.getType());
+        }
+        try {
+          if (!field.isAccessible()) {
+            field.setAccessible(true);
+          }
+          field.set(component, dependency);
+        } catch (IllegalAccessException e) {
+          throw Exceptions.exceptionWithCause("inject field " + field, e);
+        }
+      }
+    }
+    Class<?> superclass = clazz.getSuperclass();
+    if (superclass!=Object.class) {
+      inject(component, superclass);
     }
   }
 

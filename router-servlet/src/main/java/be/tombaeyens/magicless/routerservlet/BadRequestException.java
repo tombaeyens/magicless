@@ -30,6 +30,12 @@ public class BadRequestException extends HttpException {
     }
   }
 
+  public static void throwIf(boolean condition, String message, Object... args) {
+    if (condition) {
+      throw new BadRequestException(String.format(message, args));
+    }
+  }
+
   public BadRequestException(String message, Throwable cause) {
     super(message, cause);
   }

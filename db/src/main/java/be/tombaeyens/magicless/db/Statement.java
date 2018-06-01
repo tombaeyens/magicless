@@ -38,7 +38,7 @@ public class Statement {
         .getConnection()
         .prepareStatement(sqlText);
     } catch (SQLException e) {
-      throw exceptionWithCause("preparing "+getClass().getSimpleName().toUpperCase()+" statement: \n"+sqlText, e);
+      throw exceptionWithCause("prepare "+getClass().getSimpleName().toUpperCase()+" statement: \n"+sqlText, e);
     }
     return statement;
   }

@@ -55,7 +55,7 @@ public class Insert extends Statement {
     return this;
   }
 
-  public void execute() {
+  public int execute() {
     Dialect dialect = tx.getDb().getDialect();
     SqlBuilder sql = dialect.newSqlBuilder();
 
@@ -75,7 +75,7 @@ public class Insert extends Statement {
     columnValues.stream()
       .forEach(columnValue -> sql.addParameter(columnValue.getValue(), columnValue.getColumn().getType()));
 
-    executeUpdate(sql);
+    return executeUpdate(sql);
   }
 
   protected String getPastTense() {

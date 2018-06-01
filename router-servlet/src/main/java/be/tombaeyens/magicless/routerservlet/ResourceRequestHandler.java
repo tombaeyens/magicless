@@ -15,45 +15,68 @@
  */
 package be.tombaeyens.magicless.routerservlet;
 
-import be.tombaeyens.util.Io;
+import be.tombaeyens.magicless.app.util.Io;
+import be.tombaeyens.magicless.app.util.Sets;
 
 import java.util.Map;
+import java.util.Set;
 
-import static be.tombaeyens.util.Maps.entry;
-import static be.tombaeyens.util.Maps.hashMap;
+import static be.tombaeyens.magicless.app.util.Maps.entry;
+import static be.tombaeyens.magicless.app.util.Maps.hashMap;
+
 
 public class ResourceRequestHandler implements RequestHandler {
 
+  private static final String REQUEST_CONTEXT_KEY_RESOURCE_PATH = "resourcePath";
+
   String basePath;
   Map<String, String> contentTypesByExtension;
+  Set<String> indexFileNames;
 
   public ResourceRequestHandler(String basePath) {
-    this(basePath, createDefaultExtensions());
+    this(basePath, createDefaultExtensions(), createDefaultIndexFileNames());
   }
 
-  public ResourceRequestHandler(String basePath, Map<String, String> contentTypesByExtension) {
+  public static Set<String> createDefaultIndexFileNames() {
+    return Sets.hashSet(
+      "index.html"
+    );
+  }
+
+  public ResourceRequestHandler(String basePath, Map<String, String> contentTypesByExtension, Set<String> indexFileNames) {
     this.basePath = basePath;
     this.contentTypesByExtension = contentTypesByExtension;
+    this.indexFileNames = indexFileNames;
   }
 
   public static Map<String, String> createDefaultExtensions() {
     return hashMap(
       entry("html", "text/html")
-      // entry("html", "text/html")
     );
   }
 
   @Override
   public boolean matches(ServerRequest request) {
     String resourcePath = this.basePath+request.getPathInfo();
-    return Io.hasResource(resourcePath);
+    if (Io.hasResource(resourcePath)) {
+      request.setContextObject(REQUEST_CONTEXT_KEY_RESOURCE_PATH, resourcePath);
+      return true;
+    }
+    String optionalSeparator = resourcePath.endsWith("/") ? "" : "/";
+    for (String indexFileName: indexFileNames) {
+      String indexResourceName = resourcePath + optionalSeparator + indexFileName;
+      if (Io.hasResource(indexResourceName)) {
+        request.setContextObject("resourcePath", indexResourceName);
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
   public void handle(ServerRequest request, ServerResponse response) {
-    String resourcePath = this.basePath+request.getPathInfo();
+    String resourcePath = request.getContextObject(REQUEST_CONTEXT_KEY_RESOURCE_PATH);
     response.headerContentType(getContentType(resourcePath));
-
     byte[] resourceBytes = Io.getResourceAsBytes(resourcePath);
     response.bodyBytes(resourceBytes);
   }

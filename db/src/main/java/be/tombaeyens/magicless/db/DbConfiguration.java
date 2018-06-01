@@ -15,28 +15,27 @@
  */
 package be.tombaeyens.magicless.db;
 
-import be.tombaeyens.magicless.app.container.Container;
-import be.tombaeyens.magicless.app.container.Factory;
 import be.tombaeyens.magicless.app.util.Configuration;
 import be.tombaeyens.magicless.db.dialects.H2Dialect;
 
-public class DbConfiguration implements Factory {
+public class DbConfiguration {
 
   String driver;
   String url;
   String username;
   String password;
   Dialect dialect;
-  String schemaManagerNodeName;
+  String processRef;
 
   public DbConfiguration() {
   }
 
-  public DbConfiguration(Configuration configuration, String prefix) {
-    driver(configuration.getString(prefix+".driver"));
-    url(configuration.getString(prefix+".url"));
-    username(configuration.getString(prefix+".username"));
-    password(configuration.getString(prefix+".password"));
+  public DbConfiguration(String prefix, Configuration configuration) {
+    url(configuration.getStringRequired(prefix + ".url"));
+    driver(configuration.getString(prefix + ".driver"));
+    username(configuration.getString(prefix + ".username"));
+    password(configuration.getString(prefix + ".password"));
+    processRef(configuration.getString(prefix + ".processref"));
   }
 
   public DbConfiguration driver(String driver) {
@@ -52,11 +51,6 @@ public class DbConfiguration implements Factory {
         this.dialect = H2Dialect.INSTANCE;
       }
     }
-    return this;
-  }
-
-  public DbConfiguration schemaManagerNodeName(String schemaManagerNodeName) {
-    this.schemaManagerNodeName = schemaManagerNodeName;
     return this;
   }
 
@@ -86,6 +80,11 @@ public class DbConfiguration implements Factory {
     return this;
   }
 
+  public DbConfiguration processRef(String processRef) {
+    this.processRef = processRef;
+    return this;
+  }
+
   public String getDriver() {
     return driver;
   }
@@ -106,13 +105,7 @@ public class DbConfiguration implements Factory {
     return dialect;
   }
 
-  public String getSchemaManagerNodeName() {
-    return schemaManagerNodeName;
-  }
-
-  /** implementing Factory */
-  @Override
-  public Db create(Container container) {
-    return new Db(this);
+  public String getProcessRef() {
+    return processRef;
   }
 }

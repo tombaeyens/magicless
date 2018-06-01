@@ -17,6 +17,7 @@ package be.tombaeyens.magicless;
 
 import be.tombaeyens.magicless.db.Db;
 import be.tombaeyens.magicless.db.DbConfiguration;
+import be.tombaeyens.magicless.db.schema.SchemaManager;
 import be.tombaeyens.magicless.tables.User;
 import be.tombaeyens.magicless.tables.Users;
 import org.junit.Test;
@@ -34,10 +35,12 @@ public class DbTest {
     Db db = new Db(new DbConfiguration()
       .url("jdbc:h2:mem:test"));
 
-    db.getSchemaManager().ensureCurrentSchema(
-      tx->{
-        tx.newCreateTable(Users.TABLE).execute();
-      });
+    SchemaManager schemaManager = new SchemaManager(db,
+    tx->{
+      tx.newCreateTable(Users.TABLE).execute();
+    });
+    schemaManager.ensureCurrentSchema();
+
 
     db.tx(tx-> {
       Users.insertUser(tx, new User()
@@ -51,7 +54,7 @@ public class DbTest {
       log.debug("Deleting all "+Users.findAllUsers(tx).count()+" users");
       tx.newDelete(Users.TABLE).execute();
     });
-  }
 
-  // Add drop db to schema manager (which delegates to the dialect)
+    // Add drop db to schema manager (which delegates to the dialect)
+  }
 }

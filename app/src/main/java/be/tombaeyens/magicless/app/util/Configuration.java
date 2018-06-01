@@ -33,34 +33,47 @@ public class Configuration {
     properties.putAll(System.getProperties());
   }
 
-  public String getStringOpt(String name) {
-    return getString(name, false);
-  }
-
   public String getString(String name) {
-    return getString(name, true);
+    return getString(name, null, false);
   }
 
-  private String getString(String name, boolean required) {
+  public String getString(String name, String defaultValue) {
+    return getString(name, defaultValue, false);
+  }
+
+
+  public String getStringRequired(String name) {
+    return getString(name, null, true);
+  }
+
+  private String getString(String name, String defaultValue, boolean required) {
     String value = properties.getProperty(name);
-    if (required && (value==null || "".equals(value))) {
-      throw new RuntimeException("Configuration property "+name+" is required");
+    if (value==null || "".equals(value)) {
+      if (required) {
+        throw new RuntimeException("Configuration property "+name+" is required");
+      } else {
+        return defaultValue;
+      }
     }
     return value;
   }
 
+  public Integer getIntegerRequired(String name) {
+    return getInteger(name, null, true);
+  }
+
   public Integer getInteger(String name) {
-    return getInteger(name, true);
+    return getInteger(name, null, false);
   }
 
-  public Integer getIntegerOpt(String name) {
-    return getInteger(name, false);
+  public Integer getInteger(String name, Integer defaultValue) {
+    return getInteger(name, defaultValue, false);
   }
 
-  private Integer getInteger(String name, boolean required) {
-    String textValue = getString(name, required);
+  private Integer getInteger(String name, Integer defaultValue, boolean required) {
+    String textValue = getString(name, null, required);
     if (textValue==null || "".equals(textValue)) {
-      return null;
+      return defaultValue;
     }
     try {
       return Integer.parseInt(textValue);
