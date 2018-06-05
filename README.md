@@ -9,3 +9,4 @@ A framework for building Java executable jars that expose a HTTP or message base
 * Great support and guidance for tests     
 * Good exception messages, also in tests
 * Minimal dependencies
+* Test
