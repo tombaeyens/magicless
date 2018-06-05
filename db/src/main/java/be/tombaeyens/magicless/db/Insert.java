@@ -48,7 +48,7 @@ public class Insert extends Statement {
   }
 
   public Insert set(Column column, Object value) {
-    Exceptions.assertSame(table, column.getTable(), "The provided must be from the table passed in the constructor");
+    Exceptions.assertSame(table, column.getTable(), "The provided column must be from the table passed in the constructor");
     if (value!=null) {
       columnValues.add(new ColumnValue(column, value));
     }

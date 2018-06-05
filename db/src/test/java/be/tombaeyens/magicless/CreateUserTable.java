@@ -13,16 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package be.tombaeyens.magicless.db.schema;
+package be.tombaeyens.magicless;
 
 import be.tombaeyens.magicless.db.Tx;
+import be.tombaeyens.magicless.db.schema.SchemaUpdate;
+import be.tombaeyens.magicless.tables.Users;
 
-public interface SchemaUpdate {
+public class CreateUserTable implements SchemaUpdate {
 
-  /** Unique id that identifies this update.  The applied updateIds
-   * are stored in the {@link SchemaHistory} table. */
-  String getId();
+  @Override
+  public String getId() {
+    return "create-users-table";
+  }
 
-  /** Performs the schema update */
-  void update(Tx tx);
+  @Override
+  public void update(Tx tx) {
+    tx.newCreateTable(Users.TABLE).execute();
+  }
 }

@@ -121,7 +121,7 @@ public class Db {
     return dialect;
   }
 
-  public String getProcessRef() {
+  public String getProcess() {
     return processRef;
   }
 }

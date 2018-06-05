@@ -17,9 +17,7 @@ package be.tombaeyens.magicless.db.types;
 
 import be.tombaeyens.magicless.db.DataType;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 
 import static be.tombaeyens.magicless.app.util.Exceptions.exceptionWithCause;
 
@@ -45,14 +43,12 @@ public class VarcharType implements DataType {
     try {
       String string = null;
 
-      if (value!=null) {
-        if (value instanceof String) {
-          string = (String) value;
-        } else {
-          string = value.toString();
-        }
-        statement.setString(i, string);
+      if (value instanceof String) {
+        string = (String) value;
+      } else if (value!=null) {
+        string = value.toString();
       }
+      statement.setString(i, string);
 
     } catch (SQLException e) {
       throw exceptionWithCause("set JDBC varchar parameter value "+value, e);

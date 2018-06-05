@@ -17,17 +17,15 @@ package be.tombaeyens.magicless.db.schema;
 
 import be.tombaeyens.magicless.app.container.Inject;
 import be.tombaeyens.magicless.app.util.Time;
-import be.tombaeyens.magicless.db.Condition;
 import be.tombaeyens.magicless.db.Db;
-import be.tombaeyens.magicless.db.SelectResults;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static be.tombaeyens.magicless.app.util.Exceptions.assertNotNullParameter;
-import static be.tombaeyens.magicless.app.util.Exceptions.assertTrue;
 import static be.tombaeyens.magicless.db.Condition.*;
 import static be.tombaeyens.magicless.db.schema.SchemaHistory.*;
 
@@ -54,32 +52,44 @@ public class SchemaManager {
     this.updates = updates;
   }
 
+
+
+  ////////////////////////////////////////////////////////////
+  //
+  //  SEE NOTE TO SELF IN SchemaHistory
+  //
+  ////////////////////////////////////////////////////////////
+
+
   /** ENSURE that previously released SchemaUpdates do not change logically
    * (thay may have run, bugfixes are allowed) and that unreleased changes always are
    * appended at the end. */
   public void ensureCurrentSchema() {
-    int applicationVersion = updates.length;
     if (!schemaHistoryExists()) {
       createSchemaHistory();
     }
-    int dbSchemaVersion = -1;
-    while (dbSchemaVersion!=applicationVersion) {
-      dbSchemaVersion = getDbSchemaVersion();
-      if (dbSchemaVersion<applicationVersion) {
-        if (acquireSchemaLock(applicationVersion)) {
-          upgradeSchema(updates, dbSchemaVersion, applicationVersion);
-          releaseSchemaLock();
-        } else {
-          try {
-            Thread.sleep(5000);
-          } catch (InterruptedException e) {
-            log.debug("Waiting for other node to finish upgrade got interrupted");
-          }
+    if (!isSchemaUpToDate()) {
+      if (acquireSchemaLock()) {
+        upgradeSchema();
+        releaseSchemaLock();
+      } else {
+        try {
+          Thread.sleep(5000);
+        } catch (InterruptedException e) {
+          log.debug("Waiting for other node to finish upgrade got interrupted");
         }
-      } else if (dbSchemaVersion<applicationVersion) {
-        throw new RuntimeException("Please upgrade the application.");
       }
     }
+  }
+
+  private boolean isSchemaUpToDate() {
+    Set<String> dbSchemaUpdates = getDbSchemaUpdates();
+    for (SchemaUpdate update: updates) {
+      if (!dbSchemaUpdates.contains(update.getId())) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /** Skips locking of the db and assumes that a) no db has been created yet
@@ -93,15 +103,17 @@ public class SchemaManager {
         updates[finalUpdateIndex].update(tx);
       });
     }
-    updateDbSchemaVersion(updates.length, updates.length);
   }
 
-  protected boolean acquireSchemaLock(int applicationVersion) {
+  protected boolean acquireSchemaLock() {
     return db.tx(tx->{
       int updateCount = tx.newUpdate(SchemaHistory.TABLE)
-        .set(DESCRIPTION, db.getProcessRef() + " is upgrading schema to version " + applicationVersion)
-        .where(and(isNull(DESCRIPTION),
-          equal(TYPE, TYPE_VERSION)))
+        .set(DESCRIPTION, db.getProcess() + " is upgrading schema")
+        .set(PROCESS, db.getProcess())
+        .where(and(
+          isNull(DESCRIPTION),
+          isNull(PROCESS),
+          equal(TYPE, TYPE_LOCK)))
         .execute();
       if (updateCount>1) {
         throw new RuntimeException("Inconsistent database state: More than 1 version record in schemaHistory table: "+updateCount);
@@ -110,35 +122,43 @@ public class SchemaManager {
     });
   }
 
-  protected void releaseSchemaLock() {
-    // TODO
-  }
-
-  protected void upgradeSchema(SchemaUpdate[] updates, int currentDdbSchemaVersion, int applicationVersion) {
-    for (int version=currentDdbSchemaVersion+1; version<=applicationVersion; version++) {
-      final int updateIndex = version-1;
-      db.tx(tx->{
-        updates[updateIndex].update(tx);
-      });
-      updateDbSchemaVersion(applicationVersion, version);
-    }
-  }
-
-  private void updateDbSchemaVersion(int applicationVersion, int updateVersion) {
-    db.tx(tx->{
-      tx.newInsert(SchemaHistory.TABLE)
-        .set(SchemaHistory.ID, UUID.randomUUID().toString())
-        .set(SchemaHistory.DESCRIPTION, "Application version "+applicationVersion+" executed update to version "+updateVersion)
-        .set(SchemaHistory.VERSION, updateVersion)
-        .set(SchemaHistory.TIME, Time.now())
+  protected boolean releaseSchemaLock() {
+    return db.tx(tx->{
+      int updateCount = tx.newUpdate(SchemaHistory.TABLE)
+        .set(DESCRIPTION, null)
+        .set(PROCESS, null)
+        .where(and(
+          isNull(PROCESS),
+          equal(TYPE, TYPE_LOCK)))
         .execute();
-      tx.newUpdate(SchemaHistory.TABLE)
-        .set(SchemaHistory.VERSION, updateVersion)
-        .where(Condition.equal(SchemaHistory.TYPE, TYPE_VERSION))
-        .execute();
+      if (updateCount>1) {
+        throw new RuntimeException("Inconsistent database state: More than 1 version record in schemaHistory table: "+updateCount);
+      }
+      tx.setResult(updateCount==1);
     });
   }
 
+  protected void upgradeSchema() {
+    Set<String> dbSchemaUpdates = getDbSchemaUpdates();
+    for (SchemaUpdate update: updates) {
+      if (!dbSchemaUpdates.contains(update.getId())) {
+        db.tx(tx->{
+          update.update(tx);
+
+          int updateCount = tx.newInsert(SchemaHistory.TABLE)
+            .set(ID, update.getId())
+            .set(TIME, Time.now())
+            .set(PROCESS, db.getProcess())
+            .set(TYPE, TYPE_UPDATE)
+            .set(DESCRIPTION, "Executed update " + update.getId())
+            .execute();
+          if (updateCount!=1) {
+            throw new RuntimeException("Expected 1 insert of update "+update.getId());
+          }
+        });
+      }
+    }
+  }
   protected boolean schemaHistoryExists() {
     return db.tx(tx->{
       boolean schemaHistoryExists = tx.getTableNames().stream()
@@ -153,27 +173,35 @@ public class SchemaManager {
     db.tx(tx->{
       tx.newCreateTable(SchemaHistory.TABLE).execute();
       tx.newInsert(SchemaHistory.TABLE)
-        .set(SchemaHistory.ID, "v")
-        .set(SchemaHistory.TYPE, SchemaHistory.TYPE_VERSION)
-        .set(SchemaHistory.VERSION, 0)
+        .set(SchemaHistory.ID, ID_LOCK)
+        .set(SchemaHistory.TYPE, TYPE_LOCK)
         .execute();
     });
   }
 
-  protected int getDbSchemaVersion() {
+  /** The SchemaUpdate IDs that already have been applied on the DB schema */
+  protected Set<String> getDbSchemaUpdates() {
     return db.tx(tx->{
-      SelectResults selectResults = tx
-        .newSelect(SchemaHistory.VERSION)
-        .where(equal(TYPE, TYPE_VERSION))
-        .execute();
-      boolean hasResult = selectResults.next();
-      assertTrue(hasResult, "No DB schema version record found");
-      selectResults.logResults(); // because .next did not return false, logging results is not triggered automatically.
-      tx.setResult(selectResults.get(SchemaHistory.VERSION));
+      tx.setResult(
+        tx.newSelect(SchemaHistory.ID)
+          .where(equal(TYPE, TYPE_UPDATE))
+          .execute()
+          .stream()
+          .map(selectResults->selectResults.get(SchemaHistory.ID))
+          .collect(Collectors.toSet()));
     });
   }
 
-  public String getNodeName() {
-    return nodeName;
+  public void processStarts() {
+    db.tx(tx->{
+      int updateCount = tx.newInsert(SchemaHistory.TABLE)
+        .set(ID, UUID.randomUUID().toString())
+        .set(TIME, Time.now())
+        .set(PROCESS, db.getProcess())
+        .set(TYPE, TYPE_STARTUP)
+        .set(VERSION, updates.length)
+        .set(DESCRIPTION, "Process " + db.getProcess() + " started")
+        .execute();
+    });
   }
 }

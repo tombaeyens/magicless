@@ -35,12 +35,10 @@ public class DbTest {
     Db db = new Db(new DbConfiguration()
       .url("jdbc:h2:mem:test"));
 
-    SchemaManager schemaManager = new SchemaManager(db,
-    tx->{
-      tx.newCreateTable(Users.TABLE).execute();
-    });
-    schemaManager.ensureCurrentSchema();
+    SchemaManager schemaManager = new SchemaManager(db,new CreateUserTable());
 
+    schemaManager.ensureCurrentSchema();
+    schemaManager.processStarts();
 
     db.tx(tx-> {
       Users.insertUser(tx, new User()
