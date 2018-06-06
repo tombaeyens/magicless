@@ -18,6 +18,7 @@ package ai.shape;
 import ai.shape.datasets.DatasetsTable;
 import be.tombaeyens.magicless.db.Db;
 import be.tombaeyens.magicless.db.schema.SchemaManager;
+import be.tombaeyens.magicless.httpclient.ClientResponse;
 import be.tombaeyens.magicless.httpclient.GsonSerializer;
 import be.tombaeyens.magicless.httpclient.Serializer;
 import be.tombaeyens.magicless.httpserver.HttpServer;
@@ -73,4 +74,19 @@ public class ShapeTest extends HttpTest {
     Gson gson = shape.get(Gson.class);
     return new GsonSerializer(gson);
   }
+
+  public ClientResponse execute(Command command) {
+    return newPost("/command")
+            .bodyJson(command)
+            .execute()
+            .assertStatusOk();
+  }
+
+  public ClientResponse execute(Query query) {
+    return newPost("/query")
+            .bodyJson(query)
+            .execute()
+            .assertStatusOk();
+  }
+
 }

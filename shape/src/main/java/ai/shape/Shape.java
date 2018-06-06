@@ -1,9 +1,6 @@
 package ai.shape;
 
-import ai.shape.datasets.CreateDataset;
-import ai.shape.datasets.DatasetCreatedEvent;
-import ai.shape.datasets.GetDataset;
-import ai.shape.datasets.GetDatasets;
+import ai.shape.datasets.*;
 import be.tombaeyens.magicless.app.container.Container;
 import be.tombaeyens.magicless.app.util.Configuration;
 import be.tombaeyens.magicless.gson.PolymorphicTypeAdapterFactory;
@@ -39,23 +36,17 @@ public class Shape extends Container {
   public static PolymorphicTypeAdapterFactory createQueryGsonTypeAdapterFactory() {
    return new PolymorphicTypeAdapterFactory()
      .typeName(new TypeToken<Query>() {},"query")
-     .typeName(new TypeToken<GetDatasets>() {},"datasets")
-     .typeName(new TypeToken<GetDataset>() {},"dataset")
+     .typeName(new TypeToken<GetDatasetsQuery>() {},"datasets")
+     .typeName(new TypeToken<GetDatasetQuery>() {},"dataset")
      ;
   }
 
   public static PolymorphicTypeAdapterFactory createCommandGsonTypeAdapterFactory() {
     return  new PolymorphicTypeAdapterFactory()
       .typeName(new TypeToken<Command>() {}, "command")
-      .typeName(new TypeToken<CreateDataset>() {}, "createDataset")
-      .typeName(new TypeToken<CreateDataset>() {}, "updateDataset")
-      ;
-  }
-
-  public static PolymorphicTypeAdapterFactory createEventGsonTypeAdapterFactory() {
-    return new PolymorphicTypeAdapterFactory()
-      .typeName(new TypeToken<Event>() {},"event")
-      .typeName(new TypeToken<DatasetCreatedEvent>() {},"datasetCreated")
+      .typeName(new TypeToken<CreateDatasetCommand>() {}, "createDataset")
+      .typeName(new TypeToken<UpdateDatasetCommand>() {}, "updateDataset")
+      .typeName(new TypeToken<DeleteDatasetCommand>() {}, "deleteDataset")
       ;
   }
 

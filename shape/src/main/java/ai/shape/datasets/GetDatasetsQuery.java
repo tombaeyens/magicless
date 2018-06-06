@@ -13,7 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ai.shape;
 
-public class Event {
+package ai.shape.datasets;
+
+import ai.shape.Shape;
+import ai.shape.Query;
+import be.tombaeyens.magicless.db.Db;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class GetDatasetsQuery implements Query {
+
+  @Override
+  public Object execute(Shape shape) {
+    Db db = shape.get(Db.class);
+    return db.tx(tx->{
+      List<Dataset> datasets = tx.newSelectStarFrom(DatasetsTable.TABLE).execute().stream()
+        .map(selectResults -> new Dataset(selectResults))
+        .collect(Collectors.toList());
+
+      tx.setResult(datasets);
+    });
+  }
+
 }

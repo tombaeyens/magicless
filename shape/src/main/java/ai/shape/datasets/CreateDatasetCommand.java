@@ -13,28 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package ai.shape.datasets;
 
 import ai.shape.Shape;
-import ai.shape.Query;
+import ai.shape.Command;
 import be.tombaeyens.magicless.db.Db;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.UUID;
 
-public class GetDatasets implements Query {
+public class CreateDatasetCommand implements Command {
+
+  String name;
 
   @Override
   public Object execute(Shape shape) {
     Db db = shape.get(Db.class);
     return db.tx(tx->{
-      List<Dataset> datasets = tx.newSelectStarFrom(DatasetsTable.TABLE).execute().stream()
-        .map(selectResults -> new Dataset(selectResults))
-        .collect(Collectors.toList());
-
-      tx.setResult(datasets);
+      String id = UUID.randomUUID().toString();
+      int updateCount = tx.newInsert(DatasetsTable.TABLE)
+        .set(DatasetsTable.ID, id)
+        .set(DatasetsTable.NAME, name)
+        .execute();
+      if (updateCount==1) {
+        tx.setResult(new Dataset()
+          .id(id)
+          .name(name));
+      }
     });
   }
 
+  public CreateDatasetCommand name(String name) {
+    this.name = name;
+    return this;
+  }
 }

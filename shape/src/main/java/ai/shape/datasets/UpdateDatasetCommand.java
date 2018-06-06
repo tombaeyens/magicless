@@ -20,17 +20,17 @@ import ai.shape.Command;
 import be.tombaeyens.magicless.db.Db;
 import be.tombaeyens.magicless.routerservlet.BadRequestException;
 
-import java.util.UUID;
+import static be.tombaeyens.magicless.db.Condition.equal;
 
-public class UpdateDataset implements Command {
+public class UpdateDatasetCommand implements Command {
 
   String id;
   String name;
 
-  public UpdateDataset() {
+  public UpdateDatasetCommand() {
   }
 
-  public UpdateDataset(String id) {
+  public UpdateDatasetCommand(String id) {
     this.id = id;
   }
 
@@ -40,10 +40,9 @@ public class UpdateDataset implements Command {
     if (name!=null && !"".equals(name)) {
       Db db = shape.get(Db.class);
       return db.tx(tx->{
-        String id = UUID.randomUUID().toString();
         int updateCount = tx.newUpdate(DatasetsTable.TABLE)
-          .set(DatasetsTable.ID, id)
           .set(DatasetsTable.NAME, name)
+          .where(equal(DatasetsTable.ID, id))
           .execute();
         if (updateCount==1) {
           tx.setResult(new Dataset()
@@ -55,7 +54,7 @@ public class UpdateDataset implements Command {
     return null;
   }
 
-  public UpdateDataset name(String name) {
+  public UpdateDatasetCommand name(String name) {
     this.name = name;
     return this;
   }

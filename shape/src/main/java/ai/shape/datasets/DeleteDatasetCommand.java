@@ -13,26 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package ai.shape.datasets;
 
+import ai.shape.Command;
 import ai.shape.Shape;
-import ai.shape.Query;
-import be.tombaeyens.magicless.db.Condition;
 import be.tombaeyens.magicless.db.Db;
 import be.tombaeyens.magicless.routerservlet.BadRequestException;
 
-import java.util.Optional;
+import static be.tombaeyens.magicless.db.Condition.equal;
 
-public class GetDataset implements Query {
+public class DeleteDatasetCommand implements Command {
 
   String id;
 
-  public GetDataset() {
+  public DeleteDatasetCommand() {
   }
 
-  public GetDataset(String id) {
+  public DeleteDatasetCommand(String id) {
     this.id = id;
+  }
+
+  public static class DeleteDatasetResponse {
+    int deletedRows;
+    public DeleteDatasetResponse() {
+    }
+    public DeleteDatasetResponse(int deletedRows) {
+      this.deletedRows = deletedRows;
+    }
+    public int getDeletedRows() {
+      return deletedRows;
+    }
   }
 
   @Override
@@ -40,16 +50,11 @@ public class GetDataset implements Query {
     BadRequestException.throwIf(id==null || "".equals(id), "id is not specified");
     Db db = shape.get(Db.class);
     return db.tx(tx->{
-      Optional<Dataset> optionalDataset = tx.newSelectStarFrom(DatasetsTable.TABLE)
-        .where(Condition.equal(DatasetsTable.ID, id))
-        .execute().stream()
-        .map(selectResults -> new Dataset(selectResults))
-        .findFirst();
-
-      if (optionalDataset.isPresent()) {
-        tx.setResult(optionalDataset.get());
-      }
-    });
+      int updateCount = tx.newDelete(DatasetsTable.TABLE)
+        .where(equal(DatasetsTable.ID, id))
+        .execute();
+      tx.setResult(new DeleteDatasetResponse(updateCount));
+      });
   }
 
 }

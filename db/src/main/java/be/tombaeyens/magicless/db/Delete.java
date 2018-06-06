@@ -45,7 +45,7 @@ public class Delete extends AliasableStatement {
     }
 
     if (whereCondition!=null) {
-      sql.append("WHERE ");
+      sql.append("\nWHERE ");
       whereCondition.appendTo(this, sql);
     }
 

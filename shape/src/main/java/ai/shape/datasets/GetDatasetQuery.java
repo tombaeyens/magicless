@@ -13,38 +13,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package ai.shape.datasets;
 
 import ai.shape.Shape;
-import ai.shape.Command;
+import ai.shape.Query;
+import be.tombaeyens.magicless.db.Condition;
 import be.tombaeyens.magicless.db.Db;
+import be.tombaeyens.magicless.routerservlet.BadRequestException;
 
-import java.util.UUID;
+import java.util.Optional;
 
-public class CreateDataset implements Command {
+public class GetDatasetQuery implements Query {
 
-  String name;
+  String id;
+
+  public GetDatasetQuery() {
+  }
+
+  public GetDatasetQuery(String id) {
+    this.id = id;
+  }
 
   @Override
   public Object execute(Shape shape) {
+    BadRequestException.throwIf(id==null || "".equals(id), "id is not specified");
     Db db = shape.get(Db.class);
     return db.tx(tx->{
-      String id = UUID.randomUUID().toString();
-      int updateCount = tx.newInsert(DatasetsTable.TABLE)
-        .set(DatasetsTable.ID, id)
-        .set(DatasetsTable.NAME, name)
-        .execute();
-      if (updateCount==1) {
-        DatasetCreatedEvent event = new DatasetCreatedEvent()
-          .id(id)
-          .name(name);
-        tx.setResult(event);
+      Optional<Dataset> optionalDataset = tx.newSelectStarFrom(DatasetsTable.TABLE)
+        .where(Condition.equal(DatasetsTable.ID, id))
+        .execute().stream()
+        .map(selectResults -> new Dataset(selectResults))
+        .findFirst();
+
+      if (optionalDataset.isPresent()) {
+        tx.setResult(optionalDataset.get());
       }
     });
   }
 
-  public CreateDataset name(String name) {
-    this.name = name;
-    return this;
-  }
 }

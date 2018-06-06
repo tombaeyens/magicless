@@ -16,7 +16,6 @@
 package ai.shape;
 
 import ai.shape.datasets.*;
-import ai.shape.domain.datasets.*;
 import com.google.gson.reflect.TypeToken;
 import org.junit.Test;
 
@@ -29,22 +28,16 @@ public class DatasetsTest extends ShapeTest {
 
   @Test
   public void testDatasetCrud() {
-    Dataset dataset = newPost("/command")
-      .bodyJson(new CreateDataset()
+    Dataset dataset = execute(new CreateDatasetCommand()
         .name("Accounts"))
-      .execute()
-      .assertStatusOk()
       .getBodyAs(Dataset.class);
 
     String datasetId = dataset.getId();
     assertThat(datasetId, notNullValue());
     assertThat(dataset.getName(), is("Accounts"));
 
-    List<Dataset> datasets = newPost("/query")
-      .bodyJson(new GetDatasets())
-      .execute()
-      .assertStatusOk()
-      .getBodyAs(new TypeToken<List<Dataset>>(){}.getType());
+    List<Dataset> datasets = execute(new GetDatasetsQuery())
+      .getBodyAs(new TypeToken<List<Dataset>>() {}.getType());
 
     dataset = datasets.get(0);
     assertThat(datasetId, notNullValue());
@@ -52,24 +45,32 @@ public class DatasetsTest extends ShapeTest {
     assertThat(datasets.size(), is(1));
 
     assertThat(newPost("/query")
-      .bodyJson(new GetDataset())
+      .bodyJson(new GetDatasetQuery())
       .execute()
       .assertStatusBadRequest()
       .getBody(), containsString("id is not specified"));
 
-    dataset = newPost("/query")
-      .bodyJson(new GetDataset(datasetId))
-      .execute()
-      .assertStatusOk()
+    dataset = execute(new GetDatasetQuery(datasetId))
       .getBodyAs(Dataset.class);
     assertThat(dataset.getId(), is(datasetId));
     assertThat(dataset.getName(), is("Accounts"));
 
-    dataset = newPost("/command")
-      .bodyJson(new UpdateDataset(datasetId)
-        .name("Accounts"))
-      .execute()
-      .assertStatusOk()
+    dataset = execute(new UpdateDatasetCommand(datasetId)
+        .name("Accounts updated"))
       .getBodyAs(Dataset.class);
+
+    assertThat(dataset.getId(), is(datasetId));
+    assertThat(dataset.getName(), is("Accounts updated"));
+
+    assertThat(execute(new DeleteDatasetCommand(datasetId))
+        .getBodyAs(DeleteDatasetCommand.DeleteDatasetResponse.class)
+        .getDeletedRows(),
+      is(1));
+
+    datasets = execute(new GetDatasetsQuery())
+      .getBodyAs(new TypeToken<List<Dataset>>() {}.getType());
+
+    assertThat(datasets.size(), is(0));
   }
+
 }
