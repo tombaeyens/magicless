@@ -39,7 +39,6 @@
     <module>jetty-server</module>
     <module>http-client</module>
     <module>http-test</module>
-    <module>example</module>
   </modules>
 
   <dependencies>
