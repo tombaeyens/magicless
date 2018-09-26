@@ -45,7 +45,7 @@ public class GsonPolyBeanTest {
     .typeName(new TypeToken<Shape>() {}, "shape")
     .typeName(new TypeToken<Square>() {}, "square")
     .typeName(new TypeToken<Circle>() {}, "circle"))
-  .create();
+    .create();
   // @formatter:on
 
   public static class Shape {
@@ -63,11 +63,10 @@ public class GsonPolyBeanTest {
   @Test
   public void testPolymorphicSpecificClassReadAsBaseClass() {
     String originalJson = JsonQuotes.quote(
-      "{'circle':{"+
-      "'color':'green',"+
-      "'radius':5}}");
-    Type type = new TypeToken<Shape>() {
-    }.getType();
+      "{'circle':{" +
+        "'color':'green'," +
+        "'radius':5}}");
+    Type type = new TypeToken<Shape>() {}.getType();
     Circle circle = gson.fromJson(originalJson, type);
     assertNotNull(circle);
     assertEquals("green", circle.color);
@@ -78,9 +77,11 @@ public class GsonPolyBeanTest {
 
   @Test
   public void testPolymorphicSpecificClass() {
-    String originalJson = JsonQuotes.quote("{'circle':{" + "'color':'green'," + "'radius':5}}");
-    Type type = new TypeToken<Circle>() {
-    }.getType();
+    String originalJson = JsonQuotes.quote(
+      "{'circle':{" +
+        "'color':'green'," +
+        "'radius':5}}");
+    Type type = new TypeToken<Circle>() {}.getType();
     Circle circle = gson.fromJson(originalJson, type);
     assertNotNull(circle);
     assertEquals("green", circle.color);
@@ -91,15 +92,17 @@ public class GsonPolyBeanTest {
 
   @Test
   public void testPolymorphicBaseClass() {
-    String originalJson = JsonQuotes.quote("{'shape':{" + "'color':'green'}}");
-    Type type = new TypeToken<Shape>() {
-    }.getType();
+    String originalJson = JsonQuotes.quote(
+      "{'shape':{" +
+        "'color':'green'}}");
+    Type type = new TypeToken<Shape>() {}.getType();
     Shape shape = gson.fromJson(originalJson, type);
     assertNotNull(shape);
     assertEquals("green", shape.color);
     String reserializedJson = gson.toJson(shape);
     assertEquals(originalJson, reserializedJson);
   }
+
   //  @Test
   //  public void testPolymorphicNonExistingFieldInBaseClass() {
   //    String originalJson = JsonQuotes.quote(

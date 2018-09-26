@@ -80,7 +80,6 @@ public class GsonPolyGenericsTest {
 
     String reserializedJson = gson.toJson(circle);
     assertEquals(originalJson, reserializedJson);
-
   }
 
   @Test

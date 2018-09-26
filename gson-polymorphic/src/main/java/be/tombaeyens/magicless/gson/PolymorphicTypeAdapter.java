@@ -78,7 +78,7 @@ public class PolymorphicTypeAdapter<T> extends TypeAdapter<T> {
       PolymorphicTypeFields polymorphicTypeFields = polymorphicTypesByRawClass.get(value.getClass());
       String typeName = polymorphicTypeFields.typeName;
       try {
-        typeNameStrategy.write(out, typeName, new FieldsWriter(out, value, this));
+        typeNameStrategy.write(out, typeName, this, value);
       } catch (IOException e) {
         throw e;
       } catch (RuntimeException e) {
@@ -99,7 +99,7 @@ public class PolymorphicTypeAdapter<T> extends TypeAdapter<T> {
     }
     try {
       @SuppressWarnings("unchecked")
-      T object = (T) typeNameStrategy.read(in, new FieldsReader(in, this));
+      T object = (T) typeNameStrategy.read(in, this);
       return object;
     } catch (IOException e) {
       throw e;

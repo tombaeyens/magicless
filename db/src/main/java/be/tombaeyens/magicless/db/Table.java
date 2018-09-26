@@ -15,6 +15,9 @@
  */
 package be.tombaeyens.magicless.db;
 
+import be.tombaeyens.magicless.app.util.Reflection;
+
+import java.lang.reflect.Field;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -41,8 +44,33 @@ public class Table {
     if (columns==null) {
       columns = new LinkedHashMap<>();
     }
-    columns.put(column.getName(), column);
     column.table = this;
+    column.index = columns.size();
+    columns.put(column.getName(), column);
     return this;
+  }
+
+  public Table columns(Class<?> columnsClass) {
+    for (Field field: columnsClass.getDeclaredFields()) {
+      Object object = Reflection.getFieldValue(field,null);
+      if (object instanceof Column) {
+        column((Column)object);
+      }
+    }
+    return this;
+  }
+
+  public Column getPrimaryKeyColumn() {
+    for (Column column: columns.values()) {
+      if (column.isPrimaryKey()) {
+        return column;
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public String toString() {
+    return "Table(" +name + ")";
   }
 }

@@ -15,6 +15,7 @@
  */
 package be.tombaeyens.magicless.routerservlet;
 
+import be.tombaeyens.magicless.app.util.Http;
 import be.tombaeyens.magicless.app.util.Io;
 import be.tombaeyens.magicless.app.util.Sets;
 
@@ -51,24 +52,32 @@ public class ResourceRequestHandler implements RequestHandler {
 
   public static Map<String, String> createDefaultExtensions() {
     return hashMap(
-      entry("html", "text/html")
+      entry("html", "text/html"),
+      entry("css", "text/css"),
+      entry("json", "application/json")
     );
   }
 
   @Override
-  public boolean matches(ServerRequest request) {
-    String resourcePath = this.basePath+request.getPathInfo();
+  public String method() {
+    return Http.Methods.GET;
+  }
+
+  @Override
+  public boolean pathMatches(ServerRequest request) {
+    String resourcePath = basePath + request.getPathInfo();
+    if (resourcePath.endsWith("/")) {
+      for (String indexFileName: indexFileNames) {
+        String indexResourceName = resourcePath + indexFileName;
+        if (Io.hasResource(indexResourceName)) {
+          request.setContextObject(REQUEST_CONTEXT_KEY_RESOURCE_PATH, indexResourceName);
+          return true;
+        }
+      }
+    }
     if (Io.hasResource(resourcePath)) {
       request.setContextObject(REQUEST_CONTEXT_KEY_RESOURCE_PATH, resourcePath);
       return true;
-    }
-    String optionalSeparator = resourcePath.endsWith("/") ? "" : "/";
-    for (String indexFileName: indexFileNames) {
-      String indexResourceName = resourcePath + optionalSeparator + indexFileName;
-      if (Io.hasResource(indexResourceName)) {
-        request.setContextObject("resourcePath", indexResourceName);
-        return true;
-      }
     }
     return false;
   }

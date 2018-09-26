@@ -20,7 +20,7 @@ import be.tombaeyens.magicless.db.Constraint;
 public class PrimaryKey implements Constraint {
 
   @Override
-  public String getDefaultSql() {
+  public String getDefaultCreateTableColumnConstraintSql() {
     return "PRIMARY KEY";
   }
 }

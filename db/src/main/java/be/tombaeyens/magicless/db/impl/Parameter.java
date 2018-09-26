@@ -21,6 +21,7 @@ public class Parameter {
 
   Object value;
   DataType type;
+  String logValue;
 
   public Parameter(Object value, DataType type) {
     this.value = value;
@@ -33,5 +34,13 @@ public class Parameter {
 
   public DataType getType() {
     return type;
+  }
+
+  public String getLogValue() {
+    return logValue;
+  }
+
+  public void setLogValue(String logValue) {
+    this.logValue = logValue;
   }
 }

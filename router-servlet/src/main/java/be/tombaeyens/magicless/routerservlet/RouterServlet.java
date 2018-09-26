@@ -15,6 +15,7 @@
  */
 package be.tombaeyens.magicless.routerservlet;
 
+import be.tombaeyens.magicless.app.util.Http;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,15 +41,12 @@ public class RouterServlet extends HttpServlet {
   private Map<String,List<String>> defaultResponseHeaders;
   protected ExceptionListener exceptionListener;
 
-  public RouterServlet() {
-  }
-
   @Override
   protected void service(HttpServletRequest servletRequest, HttpServletResponse servletResponse) {
     ServerRequest request = new ServerRequest(servletRequest);
     ServerResponse response = new ServerResponse(request, servletResponse);
 
-    RequestHandler requestHandler = findMatchingRequestHandler(request);
+    RequestHandler requestHandler = findRequestHandler(request);
     if (requestHandler!=null) {
       request.setRequestHandler(requestHandler);
       try {
@@ -77,12 +75,34 @@ public class RouterServlet extends HttpServlet {
     if (log.isDebugEnabled()) response.logTo(log);
   }
 
-  private RequestHandler findMatchingRequestHandler(ServerRequest request) {
+  private RequestHandler findRequestHandler(ServerRequest request) {
     if (requestHandlers!=null) {
-      for (RequestHandler requestHandler: requestHandlers) {
-        if (requestHandler.matches(request)) {
-          return requestHandler;
-        }
+      if (Http.Methods.OPTIONS.equals(request.getMethod())) {
+        // See https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/OPTIONS
+        // See https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
+        return createOptionsRequestHandler(request);
+      } else {
+        return findFirstMatchingRequestHandler(request);
+      }
+    }
+    return null;
+  }
+
+  private RequestHandler createOptionsRequestHandler(ServerRequest request) {
+    OptionsHandler optionsHandler = new OptionsHandler();
+    for (RequestHandler requestHandler: requestHandlers) {
+      if (requestHandler.pathMatches(request)) {
+        optionsHandler.addAllowedMethod(requestHandler.method());
+      }
+    }
+    return optionsHandler;
+  }
+
+  private RequestHandler findFirstMatchingRequestHandler(ServerRequest request) {
+    for (RequestHandler requestHandler: requestHandlers) {
+      if (requestHandler.method().equals(request.getMethod())
+        && requestHandler.pathMatches(request)) {
+        return requestHandler;
       }
     }
     return null;
@@ -91,6 +111,7 @@ public class RouterServlet extends HttpServlet {
   public RouterServlet requestHandler(RequestHandler requestHandler) {
     if (requestHandler!=null) {
       requestHandlers.add(requestHandler);
+
     }
     return this;
   }

@@ -35,7 +35,7 @@
     <!-- COMPILE dependencies -->
     <dependency>
       <groupId>be.tombaeyens.magicless</groupId>
-      <artifactId>app</artifactId>
+      <artifactId>util</artifactId>
       <version>1.0.0-SNAPSHOT</version>
     </dependency>
     <dependency>

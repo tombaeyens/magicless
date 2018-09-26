@@ -26,7 +26,7 @@ import be.tombaeyens.magicless.db.Table;
  *
  * 1) Create new table/columns
  * 2) Any process can start doing double writing to the old as well as to the new table/columns
- * 3) Ensure that all processes are on the right write version
+ * 3) Ensure that all processes are on the right getWriter version
  * 4) Duplicate the old data (recent updates may already have been done in the new table/columns)
  * 5) Remove the writes to the old table/columns
  * 6) Remove the old table/columns

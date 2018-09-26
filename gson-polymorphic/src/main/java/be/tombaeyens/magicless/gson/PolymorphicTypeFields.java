@@ -28,7 +28,7 @@ import java.util.*;
 public class PolymorphicTypeFields {
 
   String typeName;
-  Map<String,PolymorphicField> polymorphicFields = new LinkedHashMap<>();
+  Map<String,PolymorphicField<?>> polymorphicFields = new LinkedHashMap<>();
 
   /**
    * @param typeName the unique name used in json serialization to identify the given type.
@@ -68,15 +68,16 @@ public class PolymorphicTypeFields {
 
   /** adds all declared fields in the given inheritanceType to the polymorphicFields member field */
   private void scanFields(TypeToken inheritanceType, Map<String, Type> actualTypeArguments, Gson gson) {
-    Class rawClass = inheritanceType.getRawType();
+    Class<?> rawClass = inheritanceType.getRawType();
     for (Field field: rawClass.getDeclaredFields()) {
-      if (!Modifier.isTransient(field.getModifiers())) {
+      int modifiers = field.getModifiers();
+      if (!Modifier.isTransient(modifiers) && !Modifier.isStatic(modifiers)) {
         Type fieldType = field.getGenericType();
         Type concreteFieldType = concretize(fieldType, actualTypeArguments);
         TypeToken<?> concreteFieldTypeToken = TypeToken.get(concreteFieldType);
         TypeAdapter<?> fieldTypeAdapter = gson.getAdapter(concreteFieldTypeToken);
-        @SuppressWarnings("unchecked")
-        PolymorphicField polymorphicField = new PolymorphicField(field, fieldTypeAdapter);
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        PolymorphicField<?> polymorphicField = new PolymorphicField(field, fieldTypeAdapter);
         polymorphicFields.put(field.getName(), polymorphicField);
       }
     }
@@ -127,7 +128,7 @@ public class PolymorphicTypeFields {
   public void read(JsonReader in, Object bean) throws Exception {
     while (in.peek() == JsonToken.NAME) {
       String fieldName = in.nextName();
-      PolymorphicField field = polymorphicFields.get(fieldName);
+      PolymorphicField<?> field = polymorphicFields.get(fieldName);
       // ignore non-existing fields
       if (field!=null) {
         field.read(in, bean);
@@ -137,7 +138,7 @@ public class PolymorphicTypeFields {
 
   public void write(JsonWriter out, Object bean) throws Exception {
     for (String fieldName: polymorphicFields.keySet()) {
-      PolymorphicField field = polymorphicFields.get(fieldName);
+      PolymorphicField<?> field = polymorphicFields.get(fieldName);
       out.name(fieldName);
       field.write(out, bean);
     }

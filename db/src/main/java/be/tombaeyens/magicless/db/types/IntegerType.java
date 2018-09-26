@@ -20,10 +20,10 @@ import be.tombaeyens.magicless.db.DataType;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 
 import static be.tombaeyens.magicless.app.util.Exceptions.exceptionWithCause;
 
-@SuppressWarnings("unchecked")
 public class IntegerType implements DataType {
 
   @Override
@@ -34,27 +34,26 @@ public class IntegerType implements DataType {
   @Override
   public void setParameter(PreparedStatement statement, int i, Object value) {
     try {
-      long longValue = ((Number) value).longValue();
-      statement.setLong(i, longValue);
+      if (value!=null) {
+        int intValue = ((Number) value).intValue();
+        statement.setInt(i, intValue);
+      } else {
+        statement.setNull(i, Types.INTEGER);
+      }
     } catch (SQLException e) {
-      throw exceptionWithCause("set JDBC long parameter value "+value, e);
+      throw exceptionWithCause("set JDBC int parameter value "+value, e);
     }
   }
 
   @Override
-  public String toText(Object value) {
-    return value!=null ? value.toString() : "null";
-  }
-
-  @Override
-  public boolean isRightAlinged() {
+  public boolean isRightAligned() {
     return true;
   }
 
   @Override
-  public <T> T getResultSetValue(int index, ResultSet resultSet) {
+  public Integer getResultSetValue(int index, ResultSet resultSet) {
     try {
-      return (T)(Integer) resultSet.getInt(index);
+      return resultSet.getInt(index);
     } catch (SQLException e) {
       throw exceptionWithCause("get JDBC int value "+index+" from result set", e);
     }

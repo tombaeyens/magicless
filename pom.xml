@@ -32,7 +32,7 @@
   </properties>
 
   <modules>
-    <module>app</module>
+    <module>util</module>
     <module>db</module>
     <module>gson-polymorphic</module>
     <module>router-servlet</module>

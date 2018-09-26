@@ -19,10 +19,7 @@ package be.tombaeyens.magicless.httpclient;
 import be.tombaeyens.magicless.app.util.Http;
 import be.tombaeyens.magicless.app.util.Os;
 import org.apache.http.HttpEntity;
-import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.methods.*;
 import org.apache.http.entity.StringEntity;
 
 import java.io.IOException;
@@ -68,6 +65,8 @@ public class ClientRequest {
         this.apacheRequest = new HttpPost(url);
       } else if (Http.Methods.DELETE.equals(method)) {
         this.apacheRequest = new HttpPost(url);
+      } else if (Http.Methods.OPTIONS.equals(method)) {
+        this.apacheRequest = new HttpOptions(url);
       } else {
         throw new RuntimeException("Invalid HTTP method "+method+" for request "+url);
       }

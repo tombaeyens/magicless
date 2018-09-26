@@ -15,6 +15,7 @@
  */
 package be.tombaeyens.magicless.gson;
 
+import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
@@ -28,7 +29,8 @@ public interface PolymorphicTypeNameStrategy {
   /** { "circle" : { "radius": 10 }} */
   PolymorphicTypeNameStrategy WRAPPER_OBJECT = new PolymorphicTypeNameStrategy() {
     @Override
-    public Object read(JsonReader in, FieldsReader fieldsReader) throws Exception{
+    public Object read(JsonReader in, PolymorphicTypeAdapter<?> typeAdapter) throws Exception{
+      FieldsReader fieldsReader = new FieldsReader(in, typeAdapter);
       in.beginObject();
       String typeName = in.nextName();
       Object bean = fieldsReader.instantiateBean(typeName);
@@ -39,7 +41,8 @@ public interface PolymorphicTypeNameStrategy {
       return bean;
     }
     @Override
-    public void write(JsonWriter out, String typeName, FieldsWriter fieldsWriter) throws Exception {
+    public void write(JsonWriter out, String typeName, PolymorphicTypeAdapter<?> typeAdapter, Object value) throws Exception {
+      FieldsWriter fieldsWriter = new FieldsWriter(out, value, typeAdapter);
       out.beginObject();
       out.name(typeName);
       out.beginObject();
@@ -49,7 +52,7 @@ public interface PolymorphicTypeNameStrategy {
     }
   };
 
-  Object read(JsonReader in, FieldsReader fieldsReader) throws Exception;
+  Object read(JsonReader in, PolymorphicTypeAdapter<?> typeAdapter) throws Exception;
 
-  void write(JsonWriter out, String typeName, FieldsWriter fieldsWriter) throws Exception;
+  void write(JsonWriter out, String typeName, PolymorphicTypeAdapter<?> typeAdapter, Object value) throws Exception;
 }

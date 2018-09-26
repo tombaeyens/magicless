@@ -52,7 +52,7 @@ public class Users extends Table {
   }
 
   public static Stream<User> findAllUsers(Tx tx) {
-    return tx.newSelectStarFrom(TABLE)
+    return tx.newSelect(TABLE)
       .execute()
       .stream()
       .map(Users::createUser);

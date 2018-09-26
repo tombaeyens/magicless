@@ -27,8 +27,8 @@ public class Path {
     this.pathParts = PathPart.parse(pathTemplate);
   }
 
-  /** returns true if this request path matches the given request.
-   * If the request path matches, this method also sets the request path
+  /** returns true if this request path pathMatches the given request.
+   * If the request path pathMatches, this method also sets the request path
    * parameters on the request. */
   public boolean matches(ServerRequest request) {
     String[] actualParts = request.getPathInfo().split("/");

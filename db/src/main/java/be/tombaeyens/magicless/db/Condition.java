@@ -16,14 +16,15 @@
 package be.tombaeyens.magicless.db;
 
 import be.tombaeyens.magicless.db.conditions.AndCondition;
-import be.tombaeyens.magicless.db.conditions.ColumnValueEqualCondition;
+import be.tombaeyens.magicless.db.conditions.EqualCondition;
 import be.tombaeyens.magicless.db.conditions.IsNullCondition;
-import be.tombaeyens.magicless.db.impl.SqlBuilder;
+import be.tombaeyens.magicless.db.conditions.LikeCondition;
+import be.tombaeyens.magicless.db.impl.Parameters;
 
 public interface Condition {
 
   public static Condition equal(Column column, Object value) {
-    return new ColumnValueEqualCondition(column, value);
+    return new EqualCondition(column, value);
   }
 
   public static Condition isNull(Column column) {
@@ -34,5 +35,11 @@ public interface Condition {
     return new AndCondition(andConditions);
   }
 
-  void appendTo(AliasableStatement aliasableStatement, SqlBuilder sqlBuilder);
+  public static Condition like(Column column, String pattern) {
+    return new LikeCondition(column, pattern);
+  }
+
+  String buildSql(Statement statement);
+
+  void collectParameters(Parameters parameters);
 }

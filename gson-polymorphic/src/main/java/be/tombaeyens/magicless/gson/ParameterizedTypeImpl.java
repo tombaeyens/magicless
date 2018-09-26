@@ -107,7 +107,7 @@ public class ParameterizedTypeImpl implements ParameterizedType, Serializable {
 
   private static void ensureOwnerType(Type ownerType, Type rawType) {
     if (rawType instanceof Class<?>) {
-      Class rawTypeAsClass = (Class) rawType;
+      Class<?> rawTypeAsClass = (Class<?>) rawType;
       checkArgument(ownerType != null || rawTypeAsClass.getEnclosingClass() == null,
                     "No owner type for enclosed %s", rawType);
       checkArgument(ownerType == null || rawTypeAsClass.getEnclosingClass() != null,
@@ -116,7 +116,7 @@ public class ParameterizedTypeImpl implements ParameterizedType, Serializable {
   }
 
   private static void checkNotPrimitive(Type type, String use) {
-    checkArgument(!(type instanceof Class<?>) || !((Class) type).isPrimitive(),
+    checkArgument(!(type instanceof Class<?>) || !((Class<?>) type).isPrimitive(),
                   "Primitive types are not allowed in %s: %s", use, type);
   }
 

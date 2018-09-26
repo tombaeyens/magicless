@@ -17,5 +17,5 @@ package be.tombaeyens.magicless.db;
 
 public interface Constraint {
 
-  String getDefaultSql();
+  String getDefaultCreateTableColumnConstraintSql();
 }

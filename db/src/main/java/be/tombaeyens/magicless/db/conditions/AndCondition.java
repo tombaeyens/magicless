@@ -15,26 +15,38 @@
  */
 package be.tombaeyens.magicless.db.conditions;
 
-import be.tombaeyens.magicless.db.AliasableStatement;
 import be.tombaeyens.magicless.db.Condition;
-import be.tombaeyens.magicless.db.impl.SqlBuilder;
+import be.tombaeyens.magicless.db.Statement;
+import be.tombaeyens.magicless.db.impl.Parameters;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import static java.util.stream.Collectors.joining;
 
 
 public class AndCondition implements Condition {
 
-  Condition[] andConditions;
+  List<Condition> andConditions;
 
   public AndCondition(Condition[] andConditions) {
-    this.andConditions = andConditions;
+    this.andConditions = new ArrayList<>(Arrays.asList(andConditions));
   }
 
   @Override
-  public void appendTo(AliasableStatement aliasableStatement, SqlBuilder sql) {
-    for (int i=0; i<andConditions.length; i++) {
-      if (i>0) {
-        sql.append(" \n   AND ");
-      }
-      andConditions[i].appendTo(aliasableStatement, sql);
-    }
+  public String buildSql(Statement statement) {
+    return andConditions.stream()
+      .map(andCondition->andCondition.buildSql(statement))
+      .collect(joining(" \n   AND "));
+  }
+
+  @Override
+  public void collectParameters(Parameters parameters) {
+    andConditions.forEach(andCondition->andCondition.collectParameters(parameters));
+  }
+
+  public void add(Condition andCondition) {
+    this.andConditions.add(andCondition);
   }
 }

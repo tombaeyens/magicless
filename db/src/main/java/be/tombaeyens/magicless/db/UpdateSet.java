@@ -15,7 +15,7 @@
  */
 package be.tombaeyens.magicless.db;
 
-import be.tombaeyens.magicless.db.impl.SqlBuilder;
+import be.tombaeyens.magicless.db.impl.Parameters;
 
 public class UpdateSet {
 
@@ -27,10 +27,12 @@ public class UpdateSet {
     this.value = value;
   }
 
-  public void appendTo(Update update, SqlBuilder sql) {
-    sql.append(update.getQualifiedColumnName(column));
-    sql.append(" = ?");
-    sql.addParameter(value, column.getType());
+  public String toSql(Update update) {
+    return update.getQualifiedColumnName(column)+" = ?";
+  }
+
+  public void collectParameters(Parameters parameters) {
+    parameters.addParameter(value, column.getType());
   }
 
 }

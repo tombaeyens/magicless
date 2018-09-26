@@ -20,6 +20,8 @@ import be.tombaeyens.magicless.db.DbConfiguration;
 import be.tombaeyens.magicless.db.schema.SchemaManager;
 import be.tombaeyens.magicless.tables.User;
 import be.tombaeyens.magicless.tables.Users;
+import org.h2.server.web.WebServer;
+import org.h2.tools.Server;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +46,7 @@ public class DbTest {
       Users.insertUser(tx, new User()
         .id(UUID.randomUUID().toString())
         .firstName("Tom")
-        .email("tom@shape.ai")
+        .email("mail@tombaeyens.be")
       );
     });
 

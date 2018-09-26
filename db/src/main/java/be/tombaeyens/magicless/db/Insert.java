@@ -15,19 +15,28 @@
  */
 package be.tombaeyens.magicless.db;
 
-import be.tombaeyens.magicless.app.util.Exceptions;
-import be.tombaeyens.magicless.db.impl.SqlBuilder;
+import be.tombaeyens.magicless.db.impl.Parameters;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+
+import static be.tombaeyens.magicless.app.util.Exceptions.assertNotNull;
+import static be.tombaeyens.magicless.app.util.Exceptions.assertSame;
+import static be.tombaeyens.magicless.app.util.Exceptions.exceptionWithCause;
 
 public class Insert extends Statement {
 
   Table table;
   List<ColumnValue> columnValues = new ArrayList<>();
 
-  private static class ColumnValue {
+  public Table getTable() {
+    return table;
+  }
+
+  public static class ColumnValue {
     Column column;
     Object value;
     public ColumnValue(Column column, Object value) {
@@ -48,7 +57,8 @@ public class Insert extends Statement {
   }
 
   public Insert set(Column column, Object value) {
-    Exceptions.assertSame(table, column.getTable(), "The provided column must be from the table passed in the constructor");
+    assertNotNull(column.getTable(), "Column %s isn't added to the table.", column.getName());
+    assertSame(table, column.getTable(), "The provided column must be from the table passed in the constructor");
     if (value!=null) {
       columnValues.add(new ColumnValue(column, value));
     }
@@ -56,30 +66,21 @@ public class Insert extends Statement {
   }
 
   public int execute() {
-    Dialect dialect = tx.getDb().getDialect();
-    SqlBuilder sql = dialect.newSqlBuilder();
-
-    sql.append("INSERT INTO ");
-    sql.append(table.getName());
-    sql.append(" (");
-    sql.append(columnValues.stream()
-      .map(columnValue->columnValue.getColumn().getName())
-      .collect(Collectors.joining(", ")));
-    sql.append(") \n");
-    sql.append("VALUES (");
-    sql.append(columnValues.stream()
-      .map(columnValue->"?")
-      .collect(Collectors.joining(", ")));
-    sql.append(");");
-
-    columnValues.stream()
-      .forEach(columnValue -> sql.addParameter(columnValue.getValue(), columnValue.getColumn().getType()));
-
+    String sql = getDialect().buildInsertSql(this);
     return executeUpdate(sql);
+  }
+
+  @Override
+  protected void collectParameters(Parameters parameters) {
+    columnValues.stream()
+      .forEach(columnValue -> parameters.addParameter(columnValue.getValue(), columnValue.getColumn().getType()));
   }
 
   protected String getPastTense() {
     return "Inserted";
   }
 
+  public List<ColumnValue> getColumnValues() {
+    return columnValues;
+  }
 }

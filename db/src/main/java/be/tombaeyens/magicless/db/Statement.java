@@ -15,10 +15,14 @@
  */
 package be.tombaeyens.magicless.db;
 
-import be.tombaeyens.magicless.db.impl.SqlBuilder;
+import be.tombaeyens.magicless.db.conditions.AndCondition;
+import be.tombaeyens.magicless.db.impl.Parameters;
 
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import static be.tombaeyens.magicless.app.util.Exceptions.exceptionWithCause;
 import static be.tombaeyens.magicless.db.Db.DB_LOGGER;
@@ -26,38 +30,115 @@ import static be.tombaeyens.magicless.db.Db.DB_LOGGER;
 public class Statement {
 
   protected Tx tx;
+  Map<Table,String> aliases;
+  Condition whereCondition;
 
   public Statement(Tx tx) {
     this.tx = tx;
   }
 
-  protected PreparedStatement createPreparedStatement(String sqlText) {
+  protected PreparedStatement createPreparedStatement(String sql) {
     PreparedStatement statement = null;
     try {
       statement = tx
         .getConnection()
-        .prepareStatement(sqlText);
+        .prepareStatement(sql);
     } catch (SQLException e) {
-      throw exceptionWithCause("prepare "+getClass().getSimpleName().toUpperCase()+" statement: \n"+sqlText, e);
+      throw exceptionWithCause("prepare "+getClass().getSimpleName().toUpperCase()+" statement: \n"+sql, e);
     }
     return statement;
   }
 
-  protected int executeUpdate(SqlBuilder sql) {
-    String sqlText = sql.getSql();
-    PreparedStatement statement = createPreparedStatement(sqlText);
-    sql.applyParameter(statement);
+  protected int executeUpdate(String sql) {
+    PreparedStatement statement = createPreparedStatement(sql);
     try {
-      tx.logSQL(sql.getLogText());
+      Parameters parameters = new Parameters();
+      collectParameters(parameters);
+      parameters.apply(statement);
+      tx.logSQL(parameters.toLogSql(sql));
       int updateCount = statement.executeUpdate();
       DB_LOGGER.debug(tx + " " + getPastTense() + " " + updateCount + " rows");
       return updateCount;
     } catch (SQLException e) {
-      throw exceptionWithCause("execute "+getClass().getSimpleName()+" \n"+sqlText+"\n-->", e);
+      throw exceptionWithCause("execute "+getClass().getSimpleName()+" \n"+sql+"\n-->", e);
+    } finally {
+      try {
+        statement.close();
+      } catch (SQLException e) {
+        e.printStackTrace();
+      }
+    }
+  }
+
+  protected SelectResults executeQuery(Select select, String sql) {
+    PreparedStatement statement = createPreparedStatement(sql);
+    try {
+      Parameters parameters = new Parameters();
+      collectParameters(parameters);
+      parameters.apply(statement);
+      tx.logSQL(parameters.toLogSql(sql));
+      ResultSet resultSet = statement.executeQuery();
+      return new SelectResults(select, resultSet, sql);
+    } catch (SQLException e) {
+      throw exceptionWithCause("execute query \n"+sql+"\n-->", e);
+    }
+  }
+
+  /** override if the statement sets parameters and ensure that the
+   * ordering of parameters corresponds to the ordering of the ?
+   * that were generated in the sql */
+  protected void collectParameters(Parameters parameters) {
+    if (whereCondition!=null) {
+      whereCondition.collectParameters(parameters);
     }
   }
 
   protected String getPastTense() {
     return getClass().getSimpleName()+"d";
+  }
+
+  public String getQualifiedColumnName(Column column) {
+    String alias = aliases!=null ? aliases.get(column.getTable()) : null;
+    return alias!=null ? alias+"."+column.getName() : column.getName();
+  }
+
+  protected Statement alias(Table table, String alias) {
+    if (aliases==null) {
+      aliases = new LinkedHashMap<>();
+    }
+    aliases.put(table, alias);
+    return this;
+  }
+
+  protected String getAlias(Table table) {
+    return aliases.get(table);
+  }
+
+  public Statement where(Condition whereCondition) {
+    if (this.whereCondition!=null) {
+      if (this.whereCondition instanceof AndCondition) {
+        ((AndCondition)this.whereCondition).add(whereCondition);
+      } else if (whereCondition instanceof AndCondition) {
+        ((AndCondition)whereCondition).add(this.whereCondition);
+        this.whereCondition = whereCondition;
+      } else {
+        this.whereCondition = new AndCondition(new Condition[]{this.whereCondition, whereCondition});
+      }
+    } else {
+      this.whereCondition = whereCondition;
+    }
+    return this;
+  }
+
+  public Condition getWhereCondition() {
+    return whereCondition;
+  }
+
+  public boolean hasWhereCondition() {
+    return whereCondition!=null;
+  }
+
+  protected Dialect getDialect() {
+    return tx.getDb().getDialect();
   }
 }

@@ -19,9 +19,12 @@ import be.tombaeyens.magicless.app.util.Exceptions;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -41,6 +44,12 @@ public class SelectResults {
     this.selectLogger = new SelectLogger(this);
   }
 
+  public <T> List<T> getAll(Function<SelectResults, T> mapper) {
+    return stream()
+      .map(mapper)
+      .collect(Collectors.toList());
+  }
+
   public boolean next() {
     try {
       boolean hasNext = resultSet.next();
@@ -55,10 +64,10 @@ public class SelectResults {
     if (selectField instanceof Column) {
       Column column = (Column) selectField;
       Integer index = select.getSelectorJdbcIndex(column);
-      assertNotNull(index, "Could find index position of column "+column+" in select \n"+sql);
+      assertNotNull(index, "Could find index position of results "+column+" in select \n"+sql);
       DataType type = column.getType();
       T value = type.getResultSetValue(index, resultSet);
-      selectLogger.setValue(index-1, type.toText(value));
+      selectLogger.setValue(index-1, type.toLogText(value));
       return value;
     } else {
       Exceptions.assertNotNullParameter(selectField, "selectField");
@@ -66,11 +75,19 @@ public class SelectResults {
     }
   }
 
-  /** normally this is triggered automatically by the last .next() called on
-   * which returns false.  But in case .next() is not called in a
-   * while loop and never returns false, you can call this manually. */
-  public void logResults() {
-    selectLogger.logSelectResults();
+//  /** normally this is triggered automatically by the last .next() called on
+//   * which returns false.  But in case .next() is not called in a
+//   * while loop and never returns false, you can call this manually. */
+//  public void logResults() {
+//    selectLogger.logSelectResults();
+//  }
+
+  public void log() {
+    stream().forEach(selectResults -> {
+        for (SelectField field: select.getFields()) {
+          get(field);
+        }
+      });
   }
 
   private class SelectResultsSpliterator extends Spliterators.AbstractSpliterator<SelectResults> {

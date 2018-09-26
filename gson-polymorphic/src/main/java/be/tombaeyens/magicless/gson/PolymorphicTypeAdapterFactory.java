@@ -32,10 +32,20 @@ public class PolymorphicTypeAdapterFactory implements TypeAdapterFactory {
 
   Set<TypeToken<?>> matchingTypes = new HashSet<>();
   PolymorphicTypeAdapter<?> typeAdapter = null;
-  Map<Class,Constructor<?>> accessibleConstructors = Collections.synchronizedMap(new HashMap<>());
+  Map<Class<?>,Constructor<?>> accessibleConstructors = Collections.synchronizedMap(new HashMap<>());
 
-  public PolymorphicTypeAdapterFactory typeName(Class<?> clazz, String name) {
-    return typeName(TypeToken.get(clazz), name);
+  public PolymorphicTypeAdapterFactory typeName(Type type, String name) {
+    return typeName(TypeToken.get(type), name);
+  }
+
+  public PolymorphicTypeAdapterFactory typeNamesByClass(Map<Type,String> typeNames) {
+    typeNames.forEach((type,typeName)->typeName(type, typeName));
+    return this;
+  }
+
+  public PolymorphicTypeAdapterFactory typesNamesByName(Map<String,Type> typeNames) {
+    typeNames.forEach((typeName,type)->typeName(type, typeName));
+    return this;
   }
 
   public PolymorphicTypeAdapterFactory typeName(TypeToken<?> type, String name) {
@@ -51,8 +61,10 @@ public class PolymorphicTypeAdapterFactory implements TypeAdapterFactory {
     return this;
   }
 
-  public PolymorphicTypeAdapterFactory typeNameStrategy(PolymorphicTypeNameStrategy typeStrategy) {
-    this.typeNameStrategy = typeStrategy;
+  /** When specified, the {@link TypePropertyStrategy} {"type":"typeName", ...fields...} is used
+   * instead of the default wrapped object strategy {"typeName":{ ...fields...}} */
+  public PolymorphicTypeAdapterFactory typePropertyName(String typePropertyName) {
+    this.typeNameStrategy = new TypePropertyStrategy(typePropertyName);
     return this;
   }
 

@@ -32,4 +32,12 @@ public class SelectFrom {
   public String getAlias() {
     return alias;
   }
+
+  public void setTable(Table table) {
+    this.table = table;
+  }
+
+  public void setAlias(String alias) {
+    this.alias = alias;
+  }
 }

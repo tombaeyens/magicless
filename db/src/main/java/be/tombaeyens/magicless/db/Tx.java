@@ -144,8 +144,18 @@ public class Tx {
     return new CreateTable(this, table);
   }
 
+  public Select newSelect() {
+    return new Select(this);
+  }
+
+  /** Shortcut for: select fields ... (from table is automatically added for selectFields that are columns) */
   public Select newSelect(SelectField... selectFields) {
-    return new Select(this, selectFields);
+    return new Select(this).fields(selectFields);
+  }
+
+  /** Shortcut for: select * from table */
+  public Select newSelect(Table table) {
+    return new Select(this).fields(table);
   }
 
   public Update newUpdate(Table table) {
@@ -158,12 +168,6 @@ public class Tx {
 
   public Insert newInsert(Table table) {
     return new Insert(this, table);
-  }
-
-  public Select newSelectStarFrom(Table table) {
-    Collection<Column> columnsCollection = table.getColumns().values();
-    SelectField[] columnsArray = columnsCollection.toArray(new SelectField[table.getColumns().size()]);
-    return new Select(this, columnsArray).from(table);
   }
 
   public Delete newDelete(Table table) {

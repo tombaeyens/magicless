@@ -15,8 +15,6 @@
  */
 package be.tombaeyens.magicless.db;
 
-import be.tombaeyens.magicless.app.util.Strings;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -59,11 +57,11 @@ public class SelectLogger {
   private void flushNextRow() {
     if (nextRow!=null) {
       // the next loop ensures proper max length calculation
-      // in case the results for a column are not fetched
+      // in case the results for a results are not fetched
       // and a null value has to be displayed
       for (int i=0; i<nextRow.length; i++) {
         if (nextRow[i]==null) {
-          selectResults.get(fields.get(i));
+          selectResults.selectLogger.setValue(i, "?");
         }
       }
       rowValues.add(Arrays.asList(nextRow));
@@ -81,38 +79,32 @@ public class SelectLogger {
       Integer columnLength = maxColumnLengths.get(i);
       rowLength += columnLength+1; // +1 for the | separator
       formatBuilder.append("%");
-      if (!fields.get(i).getType().isRightAlinged()) {
+      if (!fields.get(i).getType().isRightAligned()) {
         formatBuilder.append("-");
       }
       formatBuilder.append(columnLength);
       formatBuilder.append("s|");
     }
     String format = formatBuilder.toString();
-    String separatorLine = Strings.generate('+', rowLength);
 
     // Build the sql as plain text with newlines
     StringBuilder tableText = new StringBuilder();
-    tableText.append(separatorLine);
-    tableText.append("\n");
-    tableText.append(createRowLine(format, fieldNames));
-    tableText.append("\n");
-    tableText.append(separatorLine);
+    String headersFormat = format.replace('|', '+');
+    String header = createRowLine(headersFormat, fieldNames).replace(' ','-');
+    tableText.append(header);
     for (List<String> rowValues: rowValues) {
       tableText.append("\n");
       tableText.append(createRowLine(format, rowValues));
     }
-    tableText.append("\n");
-    tableText.append(separatorLine);
-
     // log the SQL results table with the tx prefix
     tx.logSQL(tableText.toString());
   }
 
   private String createRowLine(String format, List<String> rowValues) {
-    String[] truncatedValues = new String[rowValues.size()];
+    Object[] truncatedValues = new String[rowValues.size()];
     for (int i=0; i<rowValues.size(); i++) {
       String rowValue = rowValues.get(i);
-      if (rowValue.length()>MAX_COLUMN_LENGTH) {
+      if (rowValue!=null && rowValue.length()>MAX_COLUMN_LENGTH) {
         rowValue = rowValue.substring(0, MAX_COLUMN_LENGTH-3)+"...";
       }
       truncatedValues[i] = rowValue;

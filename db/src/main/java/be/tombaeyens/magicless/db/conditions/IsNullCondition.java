@@ -15,10 +15,10 @@
  */
 package be.tombaeyens.magicless.db.conditions;
 
-import be.tombaeyens.magicless.db.AliasableStatement;
 import be.tombaeyens.magicless.db.Column;
 import be.tombaeyens.magicless.db.Condition;
-import be.tombaeyens.magicless.db.impl.SqlBuilder;
+import be.tombaeyens.magicless.db.Statement;
+import be.tombaeyens.magicless.db.impl.Parameters;
 
 
 public class IsNullCondition implements Condition {
@@ -30,9 +30,11 @@ public class IsNullCondition implements Condition {
   }
 
   @Override
-  public void appendTo(AliasableStatement aliasableStatement, SqlBuilder sql) {
-    String qualifiedColumnName = aliasableStatement.getQualifiedColumnName(column);
-    sql.append(qualifiedColumnName);
-    sql.append(" IS NULL");
+  public String buildSql(Statement statement) {
+    return statement.getQualifiedColumnName(column) + " IS NULL";
+  }
+
+  @Override
+  public void collectParameters(Parameters parameters) {
   }
 }

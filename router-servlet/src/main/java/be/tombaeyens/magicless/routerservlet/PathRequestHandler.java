@@ -24,6 +24,7 @@ public abstract class PathRequestHandler implements RequestHandler {
   public static final String POST = Http.Methods.POST;
   public static final String PUT = Http.Methods.PUT;
   public static final String DELETE = Http.Methods.DELETE;
+  public static final String OPTIONS = Http.Methods.OPTIONS;
 
   private String method;
   private Path path;
@@ -39,8 +40,12 @@ public abstract class PathRequestHandler implements RequestHandler {
   }
 
   @Override
-  public boolean matches(ServerRequest request) {
-    return method.equals(request.getMethod())
-           && path.matches(request);
+  public String method() {
+    return method;
+  }
+
+  @Override
+  public boolean pathMatches(ServerRequest request) {
+    return path.matches(request);
   }
 }

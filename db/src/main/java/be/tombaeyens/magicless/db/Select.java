@@ -15,91 +15,84 @@
  */
 package be.tombaeyens.magicless.db;
 
-import be.tombaeyens.magicless.db.impl.SqlBuilder;
+import be.tombaeyens.magicless.app.util.Exceptions;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
+import java.util.Set;
 
-import static be.tombaeyens.magicless.app.util.Exceptions.*;
+import static be.tombaeyens.magicless.app.util.Exceptions.assertNotNull;
+import static be.tombaeyens.magicless.app.util.Exceptions.assertNotNullParameter;
 
-public class Select extends AliasableStatement {
+public class Select extends Statement {
 
-  List<SelectField> fields;
-  List<SelectFrom> froms;
-  Condition whereCondition;
+  List<SelectField> fields = new ArrayList<>();
+  List<Table> froms = new ArrayList<>();
+  OrderBy orderBy;
 
-  public Select(Tx tx, SelectField... fields) {
+  public Select(Tx tx) {
     super(tx);
-    this.fields = Arrays.asList(fields);
   }
 
   public SelectResults execute() {
-    Dialect dialect = tx.getDb().getDialect();
-    SqlBuilder sql = dialect.newSqlBuilder();
-
-    assertNotEmptyCollection(fields, "fields is empty. Specify at least one non-null Column or Function in Tx.newSelect(...)");
-    sql.append("SELECT ");
-    for (int i = 0; i<fields.size(); i++) {
-      if (i>0) {
-        sql.append(", ");
-      }
-      SelectField selectField = fields.get(i);
-      selectField.appendTo(this,sql);
-    }
-    sql.append(" \n");
-
-    // If columns were specified in the select from one table,
-    // and of no .from(...) is specified, then the next section
-    // calculates the from based on the first column.
-    if (froms==null && fields.size()>0) {
-      Optional<Table> tableOptional = fields.stream()
-        .filter(field -> field instanceof Column)
-        .map(field -> ((Column) field).getTable())
-        .findFirst();
-      if (tableOptional.isPresent()) {
-        from(tableOptional.get());
+    if (froms.size()>1)  {
+      if (fields.stream().allMatch(field->field instanceof Column)) {
+        Set<String> aliases = new HashSet<>();
+        froms.forEach(from->{
+          String alias = getAlias(from);
+          if (alias==null) {
+            alias = findNextAlias(aliases);
+            alias(from, alias);
+          }
+          aliases.add(alias);
+        });
       }
     }
 
-    assertNotEmptyCollection(froms, "froms is empty. Specify at least one non-null select.from(...)");
-    sql.append("FROM ");
-    for (int i = 0; i<froms.size(); i++) {
-      if (i>0) {
-        sql.append(", \n     ");
-      }
-      SelectFrom from = froms.get(i);
-      Table table = from.getTable();
-      String alias = aliases.get(table);
-      String fromSql = alias!=null ? table.getName()+" AS "+alias : table.getName();
-      sql.append(fromSql);
-    }
+    String sql = getDialect().buildSelectSql(this);
 
-    if (whereCondition!=null) {
-      sql.append("\n");
-      sql.append("WHERE ");
-      whereCondition.appendTo(this, sql);
-    }
-
-    sql.append(";");
-
-    String sqlText = sql.getSql();
-    PreparedStatement statement = createPreparedStatement(sqlText);
-
-    sql.applyParameter(statement);
-
-    try {
-      tx.logSQL(sql.getLogText());
-      ResultSet resultSet = statement.executeQuery();
-      return new SelectResults(this, resultSet, sqlText);
-    } catch (SQLException e) {
-      throw exceptionWithCause("execute query \n"+sqlText+"\n-->", e);
-    }
+    return executeQuery(this, sql);
   }
+
+  private String findNextAlias(Set<String> aliases) {
+    int i = aliases.size()+1;
+    while (aliases.contains("T"+i)) {
+      i++;
+    }
+    return "T"+i;
+  }
+
+  public Select field(SelectField selectField) {
+    fields.add(selectField);
+    if (selectField instanceof Column) {
+      from(((Column)selectField).getTable());
+    }
+    return this;
+  }
+
+  public Select fields(SelectField... fields) {
+    if (fields!=null) {
+      for (SelectField field: fields) {
+        field(field);
+      }
+    }
+    return this;
+  }
+
+  public Select fields(Table table) {
+    return fields(table, null);
+  }
+
+  public Select fields(Table table, String alias) {
+    if (table!=null && table.getColumns()!=null) {
+      for (Column column: table.getColumns().values()) {
+        field(column);
+      }
+    }
+    return this;
+  }
+
   public Select from(Table table) {
     from(table, null);
     return this;
@@ -107,20 +100,34 @@ public class Select extends AliasableStatement {
 
   public Select from(Table table, String alias) {
     assertNotNullParameter(table, "table");
-    if (froms==null) {
-      froms = new ArrayList<>();
+    if (!fromContains(table, alias)) {
+      froms.add(table);
+      alias(table, alias);
     }
-    froms.add(new SelectFrom(table, alias));
-    alias(table, alias);
     return this;
   }
 
+  private boolean fromContains(Table table, String alias) {
+    for (Table from: froms) {
+      String fromAlias = getAlias(from);
+      if (table==from
+          && ( (alias==null && fromAlias ==null)
+               || (alias!=null && alias.equals(fromAlias)))
+             ) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
   public Select where(Condition whereCondition) {
-    this.whereCondition = whereCondition;
-    return this;
+    return (Select) super.where(whereCondition);
   }
 
-  /** Returns JDBC (meaning starts at 1) index of the column. */
+
+
+  /** Returns JDBC (meaning starts at 1) index of the results. */
   public Integer getSelectorJdbcIndex(Column column) {
     for (int i = 0; i<fields.size(); i++) {
       SelectField selectField = fields.get(i);
@@ -131,11 +138,61 @@ public class Select extends AliasableStatement {
     return null;
   }
 
+  public Select orderAsc(SelectField selectField) {
+    addOrderBy(new OrderBy.Ascending(selectField));
+    return this;
+  }
+
+  public Select orderDesc(SelectField selectField) {
+    addOrderBy(new OrderBy.Descending(selectField));
+    return this;
+  }
+
+  protected void addOrderBy(OrderBy.FieldDirection fieldDirection) {
+    if (orderBy==null) {
+      orderBy = new OrderBy();
+    }
+    orderBy.add(fieldDirection);
+  }
+
+  public boolean hasOrderBy() {
+    return orderBy!=null && !orderBy.isEmpty();
+  }
+
   public Tx getTx() {
     return tx;
   }
 
   public List<SelectField> getFields() {
     return fields;
+  }
+
+  public List<Table> getFroms() {
+    return froms;
+  }
+
+  public OrderBy getOrderBy() {
+    return orderBy;
+  }
+
+  public Select join(Table table) {
+    Column foreignKeyColumn = findForeignKeyInFromsTo(table);
+    assertNotNull(foreignKeyColumn, "No foreign key found to "+table+" in the froms of this select");
+    Column primaryKey = table.getPrimaryKeyColumn();
+    assertNotNull(foreignKeyColumn, "No primary key found in "+table);
+    from(table);
+    where(Condition.equal(foreignKeyColumn, primaryKey));
+    return this;
+  }
+
+  private Column findForeignKeyInFromsTo(Table destination) {
+    for (Table from: froms) {
+      for (Column candidate: from.getColumns().values()) {
+        if (candidate.isForeignKeyTo(destination)) {
+          return candidate;
+        }
+      }
+    }
+    return null;
   }
 }

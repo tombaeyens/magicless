@@ -16,19 +16,17 @@
 
 package be.tombaeyens.magicless.db;
 
-import be.tombaeyens.magicless.db.impl.SqlBuilder;
+import be.tombaeyens.magicless.db.impl.Parameters;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static be.tombaeyens.magicless.app.util.Exceptions.assertNotEmptyCollection;
 import static be.tombaeyens.magicless.app.util.Exceptions.assertNotNullParameter;
 
-public class Update extends AliasableStatement {
+public class Update extends Statement {
 
   Table table;
   List<UpdateSet> sets;
-  Condition whereCondition;
 
   public Update(Tx tx, Table table, String alias) {
     super(tx);
@@ -38,36 +36,15 @@ public class Update extends AliasableStatement {
   }
 
   public int execute() {
-    Dialect dialect = tx.getDb().getDialect();
-    SqlBuilder sql = dialect.newSqlBuilder();
-
-    sql.append("UPDATE ");
-    sql.append(table.getName());
-    String alias = getAlias(table);
-    if (alias!=null) {
-      sql.append("AS ");
-      sql.append(alias);
-    }
-
-    sql.append("\nSET ");
-    assertNotEmptyCollection(sets, "sets is empty. Specify at least one non-null update.set(...)");
-    for (int i = 0; i<sets.size(); i++) {
-      if (i>0) {
-        sql.append(", \n    ");
-      }
-      UpdateSet updateSet = sets.get(i);
-      updateSet.appendTo(this,sql);
-    }
-    sql.append(" \n");
-
-    if (whereCondition!=null) {
-      sql.append("WHERE ");
-      whereCondition.appendTo(this, sql);
-    }
-
-    sql.append(";");
+    String sql = getDialect().buildUpdateSql(this);
 
     return executeUpdate(sql);
+  }
+
+  @Override
+  protected void collectParameters(Parameters parameters) {
+    sets.stream().forEach(set->set.collectParameters(parameters));
+    super.collectParameters(parameters);
   }
 
   public Update set(Column column, Object value) {
@@ -78,8 +55,16 @@ public class Update extends AliasableStatement {
     return this;
   }
 
+  @Override
   public Update where(Condition whereCondition) {
-    this.whereCondition = whereCondition;
-    return this;
+    return (Update) super.where(whereCondition);
+  }
+
+  public Table getTable() {
+    return table;
+  }
+
+  public List<UpdateSet> getSets() {
+    return sets;
   }
 }

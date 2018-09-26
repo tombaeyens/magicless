@@ -15,9 +15,6 @@
  */
 package be.tombaeyens.magicless.db;
 
-import be.tombaeyens.magicless.db.impl.SqlBuilder;
-
-
 public class Function implements SelectField {
 
   @Override
@@ -26,8 +23,8 @@ public class Function implements SelectField {
   }
 
   @Override
-  public void appendTo(Select select, SqlBuilder sql) {
-
+  public String buildSelectFieldSql(Select select) {
+    return null;
   }
 
   @Override

@@ -24,9 +24,13 @@ public interface DataType {
 
   void setParameter(PreparedStatement statement, int i, Object value);
 
-  String toText(Object value);
-
   <T> T getResultSetValue(int index, ResultSet resultSet);
 
-  boolean isRightAlinged();
+  default String toLogText(Object value) {
+    return value!=null ? value.toString() : "null";
+  }
+
+  default boolean isRightAligned() {
+    return false;
+  }
 }

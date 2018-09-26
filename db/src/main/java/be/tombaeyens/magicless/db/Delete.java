@@ -16,14 +16,13 @@
 
 package be.tombaeyens.magicless.db;
 
-import be.tombaeyens.magicless.db.impl.SqlBuilder;
+import be.tombaeyens.magicless.db.impl.Parameters;
 
 import static be.tombaeyens.magicless.app.util.Exceptions.assertNotNullParameter;
 
-public class Delete extends AliasableStatement {
+public class Delete extends Statement {
 
   Table table;
-  Condition whereCondition;
 
   public Delete(Tx tx, Table table, String alias) {
     super(tx);
@@ -33,29 +32,17 @@ public class Delete extends AliasableStatement {
   }
 
   public int execute() {
-    Dialect dialect = tx.getDb().getDialect();
-    SqlBuilder sql = dialect.newSqlBuilder();
-
-    sql.append("DELETE FROM ");
-    sql.append(table.getName());
-    String alias = getAlias(table);
-    if (alias!=null) {
-      sql.append("AS ");
-      sql.append(alias);
-    }
-
-    if (whereCondition!=null) {
-      sql.append("\nWHERE ");
-      whereCondition.appendTo(this, sql);
-    }
-
-    sql.append(";");
+    String sql = getDialect().buildDeleteSql(this);
 
     return executeUpdate(sql);
   }
 
+  @Override
   public Delete where(Condition whereCondition) {
-    this.whereCondition = whereCondition;
-    return this;
+    return (Delete) super.where(whereCondition);
+  }
+
+  public Table getTable() {
+    return table;
   }
 }

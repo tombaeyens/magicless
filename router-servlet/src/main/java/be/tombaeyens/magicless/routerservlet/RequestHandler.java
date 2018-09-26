@@ -15,9 +15,17 @@
  */
 package be.tombaeyens.magicless.routerservlet;
 
+/** RequestHandler's must be thread safe.  Meaning that one request handler will be used
+ * to handle all the request in a RouterServlet */
 public interface RequestHandler {
 
-  boolean matches(ServerRequest request);
+  /** One of the {@link be.tombaeyens.magicless.app.util.Http.Methods} */
+  String method();
 
+  /** True if this request handler handles is applicable for request.getPathInfo() */
+  boolean pathMatches(ServerRequest request);
+
+  /** Handles the request. It's guaranteed that a pathMatches has been called before for each request. */
   void handle(ServerRequest request, ServerResponse response);
+
 }

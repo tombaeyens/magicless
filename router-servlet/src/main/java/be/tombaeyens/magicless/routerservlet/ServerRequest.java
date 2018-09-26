@@ -15,6 +15,7 @@
  */
 package be.tombaeyens.magicless.routerservlet;
 
+import be.tombaeyens.magicless.app.util.Http;
 import org.slf4j.Logger;
 
 import javax.servlet.http.HttpServletRequest;
@@ -89,6 +90,11 @@ public class ServerRequest {
     return request.getHeader(headerName);
   }
 
+  public String getHeaderAuthorization() {
+    return getHeader(Http.Headers.AUTHORIZATION);
+  }
+
+
   /** value is read from the input stream the first time
    * and cached for subsequent invocations,
    * Returns null if there is no body. */
@@ -97,9 +103,14 @@ public class ServerRequest {
       bodyIsReadAsString = true;
       try {
         request.setCharacterEncoding(charset);
-        Scanner scanner = new Scanner(request.getInputStream(), charset).useDelimiter("\\A");
-        bodyString = scanner.hasNext() ? scanner.next() : null;
-        bodyStringLogger.logBodyString(bodyString, RouterServlet.log);
+        Scanner scanner = new Scanner(request.getInputStream(), charset);
+        try {
+          scanner.useDelimiter("\\A");
+          bodyString = scanner.hasNext() ? scanner.next() : null;
+          bodyStringLogger.logBodyString(bodyString, RouterServlet.log);
+        } finally {
+          scanner.close();
+        }
 
       } catch (IOException e) {
         throw new RuntimeException("Couldn't read request body string: "+e.getMessage(), e);
